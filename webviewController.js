@@ -160,7 +160,8 @@ viewWillLayoutSubviews: function() {
     var menuController = MenuController.new();
     menuController.commandTable = [
       {title:'Title case convert', object:self,selector:'setOption:', param:1, checked:self.mode === 1},
-      {title:'Split item',    object:self,selector:'setOption:', param:2, checked:self.mode === 2}
+      {title:'Split item',    object:self,selector:'setOption:', param:2, checked:self.mode === 2},
+      {title:'Lower case',    object:self,selector:'setOption:', param:3, checked:self.mode === 3}
     ];
     menuController.rowHeight = 35;
     menuController.preferredContentSize = {
@@ -192,6 +193,12 @@ viewWillLayoutSubviews: function() {
         self.textviewOutput.text = input.keyWords2Item(self.delm,self.pref)
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTitleCase")
+        break;
+      case 3:
+        // 输出框的文本用 toTitleCase() 方法处理
+        self.textviewOutput.text = input.toLowerCase()
+        // 将 textviewOutput.text 的内容复制到剪切板
+        UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         break;
       default:
         self.textviewOutput.text = "no results"
