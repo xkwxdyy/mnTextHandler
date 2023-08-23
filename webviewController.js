@@ -1,7 +1,7 @@
 
 var titleCaseController = JSB.defineClass('titleCaseController : UIViewController', {
   viewDidLoad: function() {
-    let config  =  NSUserDefaults.standardUserDefaults().objectForKey("MNTitleCase")
+    let config  =  NSUserDefaults.standardUserDefaults().objectForKey("MNTextHandler")
     self.appInstance = Application.sharedInstance();
     self.closeImage = UIImage.imageWithDataScale(NSData.dataWithContentsOfFile(self.mainPath + `/stop.png`), 2)
     self.lastFrame = self.view.frame;
@@ -159,9 +159,11 @@ viewWillLayoutSubviews: function() {
     if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
     var menuController = MenuController.new();
     menuController.commandTable = [
-      {title:'Title case convert', object:self,selector:'setOption:', param:1, checked:self.mode === 1},
-      {title:'Split item',    object:self,selector:'setOption:', param:2, checked:self.mode === 2},
-      {title:'Lower case',    object:self,selector:'setOption:', param:3, checked:self.mode === 3}
+      {title:'Title case convert', object:self, selector:'setOption:', param:1, checked:self.mode === 1},
+      {title:'Split item', object:self, selector:'setOption:', param:2, checked:self.mode === 2},
+      {title:'Convert to lower case', object:self, selector:'setOption:', param:3, checked:self.mode === 3},
+      {title:'Keywords to MNtag', object:self, selector:'setOption:', param:4, checked:self.mode === 4},
+      {title:'Find and replace', object:self, selector:'setOption:', param:5, checked:self.mode === 5},
     ];
     menuController.rowHeight = 35;
     menuController.preferredContentSize = {
@@ -176,29 +178,46 @@ viewWillLayoutSubviews: function() {
   setOption: function (params) {
     if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
     self.mode = params
-    NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTitleCase")
+    NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
   },
   transform: function() {
     let input = self.textviewInput.text
     switch (self.mode) {
-      case 1:
+      case 1:  // 转英文标题规范格式
         // 输出框的文本用 toTitleCase() 方法处理
         self.textviewOutput.text = input.toTitleCase()
         // 将 textviewOutput.text 的内容复制到剪切板
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         break;
-      case 2:
+      case 2:  // 分割
         self.delm = self.textviewDelim.text
         self.pref = self.textviewPrefix.text
         self.textviewOutput.text = input.keyWords2Item(self.delm,self.pref)
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
-        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTitleCase")
+        // 把配置写到系统里
+        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
         break;
-      case 3:
+      case 3:  // 转小写
         // 输出框的文本用 toTitleCase() 方法处理
         self.textviewOutput.text = input.toLowerCase()
         // 将 textviewOutput.text 的内容复制到剪切板
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
+        break;
+      case 4:  // 转 MN 标签
+        self.delm = self.textviewDelim.text
+        self.pref = self.textviewPrefix.text
+        self.textviewOutput.text = input.keyWords2MNTag(self.delm,self.pref)
+        UIPasteboard.generalPasteboard().string = self.textviewOutput.text
+        // 把配置写到系统里
+        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
+        break;
+      case 5: // 查找替换
+        self.delm = self.textviewDelim.text
+        self.pref = self.textviewPrefix.text
+        self.textviewOutput.text = input.findReplace(self.delm,self.pref)
+        UIPasteboard.generalPasteboard().string = self.textviewOutput.text
+        // 把配置写到系统里
+        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -330,18 +349,58 @@ String.prototype.toTitleCase = function () {
     .join('')
 }
 
-String.prototype.keyWords2Item = function (delm,pref) {
-  let delmPattern = RegExp(`${delm}`)
+// 需求：关键词分割，并转换为无序列表
+// 参数说明：
+//   splitLabel 输入“分割点”
+//   preLabel 输入“前缀”
+// 效果：
+//   1. 将输入的文本按照 splitLabel 分割为多个 items
+//   2. item => preLabel + item
+//   3. 将多个 item 用 \n 连接并输出
+String.prototype.keyWords2Item = function (splitLabel, preLabel) {
+  let splitLabelPattern = RegExp(`${splitLabel}`)
   // 要注意匹配 - 的时候如果不放在 [] 的首尾，需要用 \- 转义
   let punctuationDeletePattern = /^[\s.,;:–\-_!?]*([a-zA-Z0-9].*[a-zA-Z0-9])[\s.,;:–\-_!?]*$/g;
   // 去掉首位的标点符号
   let thisHandleVersion = this.replace(punctuationDeletePattern, "$1")
   // 再去掉一次空格（防止标点符号附近有空格）
   thisHandleVersion = thisHandleVersion.trim();
-  if (delmPattern.test(this)) {
-    let items = thisHandleVersion.split(delm).map(item=>pref+item.trim()).join('\n')
+  if (splitLabelPattern.test(this)) {
+    let items = thisHandleVersion.split(splitLabel).map(item=>preLabel+item.trim()).join('\n')  // 用换行符链接
     return items
   }else{
     return "No delimiter found"
   }
 }
+
+// 需求：将关键词转化为 MN 标签形式（即 #xxx），并转换为无序列表形式
+// MN 标签的语法：
+//   - 不能有空格 => 用下划线 _ 代替
+//   - 不能有 -  => 用下划线 _ 代替
+// 设计思路
+// - 先分割
+// - 将空格和 - 替换为下划线
+// - 再转换为 MN 标签
+
+String.prototype.keyWords2MNTag = function (splitLabel, preLabel) {
+  let splitLabelPattern = RegExp(`${splitLabel}`)
+  let mnTagPattern = /[\s\-]/g
+  // 要注意匹配 - 的时候如果不放在 [] 的首尾，需要用 \- 转义
+  let punctuationDeletePattern = /^[\s.,;:–\-_!?]*([a-zA-Z0-9].*[a-zA-Z0-9])[\s.,;:–\-_!?]*$/g;
+  // 去掉首位的标点符号
+  let thisHandleVersion = this.replace(punctuationDeletePattern, "$1")
+  // 再去掉一次空格（防止标点符号附近有空格）
+  thisHandleVersion = thisHandleVersion.trim();
+  if (splitLabelPattern.test(this)) {
+    let items = thisHandleVersion.split(splitLabel).map(item => preLabel + "#" + item.replace(mnTagPattern, "_")).join('\n')  // 用换行符链接
+    return items
+  }else{
+    return "No delimiter found"
+  }
+}
+
+// 查找替换
+String.prototype.findReplace = function (search, replacement) {
+  var target = this;
+  return target.replace(new RegExp(search, 'g'), replacement);
+};
