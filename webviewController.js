@@ -203,7 +203,7 @@ viewWillLayoutSubviews: function() {
       case 2:  // 分割
         self.delm = self.textviewDelim.text
         self.pref = self.textviewPrefix.text
-        self.textviewOutput.text = input.keyWords2Item(self.delm,self.pref)
+        self.textviewOutput.text = input.splitItem(self.delm,self.pref)
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         // 把配置写到系统里
         NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
@@ -378,7 +378,7 @@ String.prototype.toTitleCase = function () {
 //   1. 将输入的文本按照 splitLabel 分割为多个 items
 //   2. item => preLabel + item
 //   3. 将多个 item 用 \n 连接并输出
-String.prototype.keyWords2Item = function (splitLabel, preLabel) {
+String.prototype.splitItem = function (splitLabel, preLabel) {
   let splitLabelPattern = RegExp(`${splitLabel}`)
   // 要注意匹配 - 的时候如果不放在 [] 的首尾，需要用 \- 转义
   let punctuationDeletePattern = /^[\s.,;:–\-_!?]*([a-zA-Z0-9].*[a-zA-Z0-9])[\s.,;:–\-_!?]*$/g;
@@ -405,7 +405,7 @@ String.prototype.keyWords2Item = function (splitLabel, preLabel) {
 
 String.prototype.keyWords2MNTag = function (splitLabel, preLabel) {
   let splitLabelPattern = RegExp(`${splitLabel}`)
-  let mnTagPattern = /[\s\-]/g
+  let mnTagPattern = /[\s–\-]/g
   // 要注意匹配 - 的时候如果不放在 [] 的首尾，需要用 \- 转义
   let punctuationDeletePattern = /^[\s.,;:–\-_!?]*([a-zA-Z0-9].*[a-zA-Z0-9])[\s.,;:–\-_!?]*$/g;
   // 去掉首位的标点符号
@@ -414,6 +414,9 @@ String.prototype.keyWords2MNTag = function (splitLabel, preLabel) {
   thisHandleVersion = thisHandleVersion.trim();
   if (splitLabelPattern.test(this)) {
     let items = thisHandleVersion.split(splitLabel).map(item => preLabel + "#" + item.replace(mnTagPattern, "_")).join('\n')  // 用换行符链接
+    // 将多个下划线合并为一个
+    items = items.replace(/_+/g, "_")
+    items = "- 关键词(keywords)：\n" + items
     return items
   }else{
     return "No delimiter found"
@@ -424,4 +427,4 @@ String.prototype.keyWords2MNTag = function (splitLabel, preLabel) {
 String.prototype.findReplace = function (search, replacement) {
   var target = this;
   return target.replace(new RegExp(search, 'g'), replacement);
-};
+}
