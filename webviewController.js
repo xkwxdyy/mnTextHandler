@@ -32,12 +32,7 @@ var titleCaseController = JSB.defineClass('titleCaseController : UIViewControlle
     self.closeButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
     self.closeButton.titleLabel.font = UIFont.systemFontOfSize(14);
 
-    self.pasteButton = UIButton.buttonWithType(0);
-    self.setButtonLayout(self.pasteButton,"pasteButtonTapped:")
-    self.pasteButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    self.pasteButton.layer.opacity = 0.5
-    self.pasteButton.setTitleForState("Paste",0)
-    self.pasteButton.titleLabel.font = UIFont.systemFontOfSize(16);
+
 
     self.transformButton = UIButton.buttonWithType(0);
     self.setButtonLayout(self.transformButton,"transform:")
@@ -55,22 +50,7 @@ var titleCaseController = JSB.defineClass('titleCaseController : UIViewControlle
 
     self.color = ["#ffffb4","#ccfdc4","#b4d1fb","#f3aebe","#ffff54","#75fb4c","#55bbf9","#ea3323","#ef8733","#377e47","#173dac","#be3223","#ffffff","#dadada","#b4b4b4","#bd9fdc"]
 
-    self.moveGesture0 = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    self.pasteButton.addGestureRecognizer(self.moveGesture0)
-    self.moveGesture0.view.hidden = false
-    self.moveGesture0.addTargetAction(self,"onMoveGesture:")
-    self.moveGesture1 = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    self.optionButton.addGestureRecognizer(self.moveGesture1)
-    self.moveGesture1.view.hidden = false
-    self.moveGesture1.addTargetAction(self,"onMoveGesture:")
-    self.moveGesture2 = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    self.transformButton.addGestureRecognizer(self.moveGesture2)
-    self.moveGesture2.view.hidden = false
-    self.moveGesture2.addTargetAction(self,"onMoveGesture:")
-    self.moveGesture = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    self.moveButton.addGestureRecognizer(self.moveGesture)
-    self.moveGesture.view.hidden = false
-    self.moveGesture.addTargetAction(self,"onMoveGesture:")
+
 
 
     self.textviewInput = UITextView.new()
@@ -105,6 +85,35 @@ var titleCaseController = JSB.defineClass('titleCaseController : UIViewControlle
     self.textviewPrefix.text = self.pref
     self.textviewPrefix.bounces = true
 
+    self.pasteButton = UIButton.buttonWithType(0);
+    self.setButtonLayout(self.pasteButton,"pasteButtonTapped:")
+    self.pasteButton.layer.cornerRadius = 5
+    self.pasteButton.setTitleForState("Paste",0)
+    self.pasteButton.titleLabel.font = UIFont.systemFontOfSize(16);
+
+    self.copyButton = UIButton.buttonWithType(0);
+    self.setButtonLayout(self.copyButton,"copyButtonTapped:")
+    self.copyButton.layer.cornerRadius = 5
+    self.copyButton.setTitleForState("Copy",0)
+    self.copyButton.titleLabel.font = UIFont.systemFontOfSize(16);
+
+    // self.moveGesture0 = new UIPanGestureRecognizer(self,"onMoveGesture:")
+    // self.pasteButton.addGestureRecognizer(self.moveGesture0)
+    // self.moveGesture0.view.hidden = false
+    // self.moveGesture0.addTargetAction(self,"onMoveGesture:")
+    self.moveGesture1 = new UIPanGestureRecognizer(self,"onMoveGesture:")
+    self.optionButton.addGestureRecognizer(self.moveGesture1)
+    self.moveGesture1.view.hidden = false
+    self.moveGesture1.addTargetAction(self,"onMoveGesture:")
+    self.moveGesture2 = new UIPanGestureRecognizer(self,"onMoveGesture:")
+    self.transformButton.addGestureRecognizer(self.moveGesture2)
+    self.moveGesture2.view.hidden = false
+    self.moveGesture2.addTargetAction(self,"onMoveGesture:")
+    self.moveGesture = new UIPanGestureRecognizer(self,"onMoveGesture:")
+    self.moveButton.addGestureRecognizer(self.moveGesture)
+    self.moveGesture.view.hidden = false
+    self.moveGesture.addTargetAction(self,"onMoveGesture:")
+
     self.resizeGesture = new UIPanGestureRecognizer(self,"onResizeGesture:")
     self.closeButton.addGestureRecognizer(self.resizeGesture)
     self.resizeGesture.view.hidden = false
@@ -125,9 +134,6 @@ viewWillLayoutSubviews: function() {
     var yBottom   = yTop + viewFrame.height
     self.closeButton.frame = {x: xRight-35,y: yBottom-35,width: 30,height: 30};
     self.moveButton.frame = {x: xLeft+5 ,y: yBottom-35,width: xRight-10,height: 30};
-    self.optionButton.frame = {  x: xLeft+185,  y: yBottom-35,  width: 65,  height: 30,}
-    self.transformButton.frame = {  x: xLeft+5,  y: yBottom-35,  width: 90,  height: 30,};
-    self.pasteButton.frame = {  x: xLeft+110,  y: yBottom-35,  width: 60,  height: 30,};
     var halfHeight = (viewFrame.height-100)*0.5
     var halfWidth = (viewFrame.width-15)*0.5
     viewFrame.y = 5
@@ -135,15 +141,20 @@ viewWillLayoutSubviews: function() {
     viewFrame.height = halfHeight
     viewFrame.width = viewFrame.width -10
     self.textviewInput.frame = viewFrame
+    self.pasteButton.frame = {  x: viewFrame.width-60,  y: viewFrame.height-30,  width: 60,  height: 30,};
     viewFrame.y = 10+halfHeight
     self.textviewOutput.frame = viewFrame
+    self.copyButton.frame = {  x: viewFrame.width-60,  y: halfHeight+viewFrame.height-25,  width: 60,  height: 30,};
     viewFrame.y = 15+halfHeight*2
     viewFrame.height = 45
     viewFrame.width = halfWidth
 
     self.textviewDelim.frame = viewFrame
+    self.transformButton.frame = {  x: xLeft+5,  y: yBottom-35,  width: viewFrame.width,  height: 30,};
     viewFrame.x = 10+halfWidth
     self.textviewPrefix.frame = viewFrame
+    self.optionButton.frame = {  x: viewFrame.x,  y: yBottom-35,  width: viewFrame.width-30,  height: 30,}
+
 
 
   },
@@ -152,8 +163,8 @@ viewWillLayoutSubviews: function() {
   showOption: function(sender) {
     self.optionButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
     self.optionButton.layer.opacity = 1.0
-    self.pasteButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    self.pasteButton.layer.opacity = 0.5
+    // self.pasteButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+    // self.pasteButton.layer.opacity = 0.5
     self.transformButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
     self.transformButton.layer.opacity = 0.5
     if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
@@ -226,20 +237,30 @@ viewWillLayoutSubviews: function() {
     // self.textviewOutput.text = input
     self.transformButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
     self.transformButton.layer.opacity = 1.0
-    self.pasteButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    self.pasteButton.layer.opacity = 0.5
+    // self.pasteButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+    // self.pasteButton.layer.opacity = 0.5
     self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
     self.optionButton.layer.opacity = 0.5
   },
   pasteButtonTapped: function() {
-    self.mode = 1
-    self.pasteButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
-    self.pasteButton.layer.opacity = 1.0
-    self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    self.optionButton.layer.opacity = 0.5
-    self.transformButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    self.transformButton.layer.opacity = 0.5
+    // self.mode = 1
+    // self.pasteButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
+    // self.pasteButton.layer.opacity = 1.0
+    // self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+    // self.optionButton.layer.opacity = 0.5
+    // self.transformButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+    // self.transformButton.layer.opacity = 0.5
     self.textviewInput.text = UIPasteboard.generalPasteboard().string
+  },
+  copyButtonTapped: function() {
+    // self.mode = 1
+    // self.pasteButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
+    // self.pasteButton.layer.opacity = 1.0
+    // self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+    // self.optionButton.layer.opacity = 0.5
+    // self.transformButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+    // self.transformButton.layer.opacity = 0.5
+    UIPasteboard.generalPasteboard().string = self.textviewOutput.text
   },
   closeButtonTapped: function() {
     self.view.hidden = true;
