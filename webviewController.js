@@ -1,129 +1,151 @@
+var mnTextHandlerController = JSB.defineClass(
+  'mnTextHandlerController : UIViewController', {
+    viewDidLoad: function() {
+      let config  =  NSUserDefaults.standardUserDefaults().objectForKey("mnTextHandler")
+      self.appInstance = Application.sharedInstance();
+      self.closeImage = UIImage.imageWithDataScale(NSData.dataWithContentsOfFile(self.mainPath + `/close.png`), 2)
+      self.lastFrame = self.view.frame;
+      self.currentFrame = self.view.frame
+      // 如果用户没有配置，则调用第一个功能
+      self.mode = config?config.mode:1
+      // 设置默认的分隔符和前缀
+      self.delimiter = config?config.delimiter:"; "
+      self.prefix = config?config.prefix:"  - "
+      // 设置默认的查找和替换
+      self.search = config?config.delimiter:"; "
+      self.replacement = config?config.prefix:"  - "
+      self.moveDate = Date.now()
+      self.view.layer.shadowOffset = {width: 0, height: 0};
+      self.view.layer.shadowRadius = 15;
+      self.view.layer.shadowOpacity = 0.5;
+      self.view.layer.shadowColor = UIColor.colorWithWhiteAlpha(0.5, 1);
+      self.view.layer.opacity = 1.0
+      self.view.layer.cornerRadius = 11
+      self.view.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0.8)
+      // 底下的 toolbar 选中后的背景颜色
+      self.highlightColor = UIColor.blendedColor(
+        UIColor.colorWithHexString("#2c4d81").colorWithAlphaComponent(0.8),
+        Application.sharedInstance().defaultTextColor,
+        0.8
+      );
 
-var titleCaseController = JSB.defineClass('titleCaseController : UIViewController', {
-  viewDidLoad: function() {
-    let config  =  NSUserDefaults.standardUserDefaults().objectForKey("MNTextHandler")
-    self.appInstance = Application.sharedInstance();
-    self.closeImage = UIImage.imageWithDataScale(NSData.dataWithContentsOfFile(self.mainPath + `/stop.png`), 2)
-    self.lastFrame = self.view.frame;
-    self.currentFrame = self.view.frame
-    self.mode = config?config.mode:1
-    self.delm = config?config.delm:";"
-    self.pref = config?config.pref:"- "
-    self.moveDate = Date.now()
-    self.view.layer.shadowOffset = {width: 0, height: 0};
-    self.view.layer.shadowRadius = 15;
-    self.view.layer.shadowOpacity = 0.5;
-    self.view.layer.shadowColor = UIColor.colorWithWhiteAlpha(0.5, 1);
-    self.view.layer.opacity = 1.0
-    self.view.layer.cornerRadius = 11
-    self.view.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0.8)
-    self.highlightColor = UIColor.blendedColor(
-      UIColor.colorWithHexString("#2c4d81").colorWithAlphaComponent(0.8),
-      Application.sharedInstance().defaultTextColor,
-      0.8
-    );
+      self.moveButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.moveButton)
 
-    self.moveButton = UIButton.buttonWithType(0);
-    self.setButtonLayout(self.moveButton)
-
-    self.closeButton = UIButton.buttonWithType(0);
-    self.setButtonLayout(self.closeButton,"closeButtonTapped:")
-    self.closeButton.setImageForState(self.closeImage,0)
-    self.closeButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    self.closeButton.titleLabel.font = UIFont.systemFontOfSize(14);
-
-
-
-    self.transformButton = UIButton.buttonWithType(0);
-    self.setButtonLayout(self.transformButton,"transform:")
-    self.transformButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
-    self.transformButton.layer.opacity = 1.0
-    self.transformButton.setTitleForState("Transform",0)
-    self.transformButton.titleLabel.font = UIFont.systemFontOfSize(16);
-
-    self.optionButton = UIButton.buttonWithType(0);
-    self.setButtonLayout(self.optionButton,"showOption:")
-    self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    self.optionButton.layer.opacity = 0.5
-    self.optionButton.setTitleForState("Option",0)
-    self.optionButton.titleLabel.font = UIFont.systemFontOfSize(16);
-
-    self.color = ["#ffffb4","#ccfdc4","#b4d1fb","#f3aebe","#ffff54","#75fb4c","#55bbf9","#ea3323","#ef8733","#377e47","#173dac","#be3223","#ffffff","#dadada","#b4b4b4","#bd9fdc"]
+      self.closeButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.closeButton,"closeButtonTapped:")
+      self.closeButton.setImageForState(self.closeImage,0)
+      self.closeButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+      self.closeButton.titleLabel.font = UIFont.systemFontOfSize(14);
 
 
 
+      self.transformButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.transformButton,"transform:")
+      // 底下 toolbar 未选中时的背景颜色
+      self.transformButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
+      self.transformButton.layer.opacity = 1.0
+      // transform 按钮的显示文字
+      self.transformButton.setTitleForState("Transform",0)
+      self.transformButton.titleLabel.font = UIFont.systemFontOfSize(16);
 
-    self.textviewInput = UITextView.new()
-    self.textviewInput.font = UIFont.systemFontOfSize(16);
-    self.textviewInput.layer.cornerRadius = 8
-    self.textviewInput.backgroundColor = UIColor.grayColor().colorWithAlphaComponent(0.8)
-    self.view.addSubview(self.textviewInput)
-    self.textviewInput.text = `Input here`
-    self.textviewInput.bounces = true
+      self.optionButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.optionButton,"showOption:")
+      self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
+      self.optionButton.layer.opacity = 0.5
+      // option 按钮的显示文字
+      self.optionButton.setTitleForState("Option",0)
+      self.optionButton.titleLabel.font = UIFont.systemFontOfSize(16);
 
-    self.textviewOutput = UITextView.new()
-    self.textviewOutput.font = UIFont.systemFontOfSize(16);
-    self.textviewOutput.layer.cornerRadius = 8
-    self.textviewOutput.backgroundColor = UIColor.grayColor().colorWithAlphaComponent(0.8)
-    self.view.addSubview(self.textviewOutput)
-    self.textviewOutput.text = `Output here`
-    self.textviewOutput.bounces = true
 
-    self.textviewDelim = UITextView.new()
-    self.textviewDelim.font = UIFont.systemFontOfSize(16);
-    self.textviewDelim.layer.cornerRadius = 8
-    self.textviewDelim.backgroundColor = UIColor.grayColor().colorWithAlphaComponent(0.8)
-    self.view.addSubview(self.textviewDelim)
-    self.textviewDelim.text = self.delm
-    self.textviewDelim.bounces = true
+      // 新建一个 input 框的实例
+      self.textviewInput = UITextView.new()
+      self.textviewInput.font = UIFont.systemFontOfSize(16);
+      self.textviewInput.layer.cornerRadius = 8
+      // 输入框的背景颜色
+      self.textviewInput.backgroundColor = UIColor.grayColor().colorWithAlphaComponent(0.3)  // 透明度
+      self.view.addSubview(self.textviewInput)
+      // 输入框的默认文本
+      self.textviewInput.text = `Input here`
+      self.textviewInput.bounces = true
 
-    self.textviewPrefix = UITextView.new()
-    self.textviewPrefix.font = UIFont.systemFontOfSize(16);
-    self.textviewPrefix.layer.cornerRadius = 8
-    self.textviewPrefix.backgroundColor = UIColor.grayColor().colorWithAlphaComponent(0.8)
-    self.view.addSubview(self.textviewPrefix)
-    self.textviewPrefix.text = self.pref
-    self.textviewPrefix.bounces = true
 
-    self.pasteButton = UIButton.buttonWithType(0);
-    self.setButtonLayout(self.pasteButton,"pasteButtonTapped:")
-    self.pasteButton.layer.cornerRadius = 5
-    self.pasteButton.setTitleForState("Paste",0)
-    self.pasteButton.titleLabel.font = UIFont.systemFontOfSize(16);
+      // 新建一个 output 框的实例
+      self.textviewOutput = UITextView.new()
+      self.textviewOutput.font = UIFont.systemFontOfSize(16);
+      self.textviewOutput.layer.cornerRadius = 8
+      // 输出框的背景颜色
+      self.textviewOutput.backgroundColor = UIColor.grayColor().colorWithAlphaComponent(0.3)  // 透明度
+      self.view.addSubview(self.textviewOutput)
+      // 输出框的默认文本
+      self.textviewOutput.text = `Output here`
+      self.textviewOutput.bounces = true
 
-    self.copyButton = UIButton.buttonWithType(0);
-    self.setButtonLayout(self.copyButton,"copyButtonTapped:")
-    self.copyButton.layer.cornerRadius = 5
-    self.copyButton.setTitleForState("Copy",0)
-    self.copyButton.titleLabel.font = UIFont.systemFontOfSize(16);
 
-    // self.moveGesture0 = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    // self.pasteButton.addGestureRecognizer(self.moveGesture0)
-    // self.moveGesture0.view.hidden = false
-    // self.moveGesture0.addTargetAction(self,"onMoveGesture:")
-    self.moveGesture1 = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    self.optionButton.addGestureRecognizer(self.moveGesture1)
-    self.moveGesture1.view.hidden = false
-    self.moveGesture1.addTargetAction(self,"onMoveGesture:")
-    self.moveGesture2 = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    self.transformButton.addGestureRecognizer(self.moveGesture2)
-    self.moveGesture2.view.hidden = false
-    self.moveGesture2.addTargetAction(self,"onMoveGesture:")
-    self.moveGesture = new UIPanGestureRecognizer(self,"onMoveGesture:")
-    self.moveButton.addGestureRecognizer(self.moveGesture)
-    self.moveGesture.view.hidden = false
-    self.moveGesture.addTargetAction(self,"onMoveGesture:")
+      // 新建一个分隔符输入框的实例
+      self.textviewDelimeter = UITextView.new()
+      self.textviewDelimeter.font = UIFont.systemFontOfSize(16);
+      self.textviewDelimeter.layer.cornerRadius = 8
+      self.textviewDelimeter.backgroundColor = UIColor.grayColor().colorWithAlphaComponent(0.3)
+      self.view.addSubview(self.textviewDelimeter)
+      self.textviewDelimeter.text = self.delimiter
+      self.textviewDelimeter.bounces = true
 
-    self.resizeGesture = new UIPanGestureRecognizer(self,"onResizeGesture:")
-    self.closeButton.addGestureRecognizer(self.resizeGesture)
-    self.resizeGesture.view.hidden = false
-    self.resizeGesture.addTargetAction(self,"onResizeGesture:")
-  },
-  viewWillAppear: function(animated) {
-  },
-  viewWillDisappear: function(animated) {
-  },
-viewWillLayoutSubviews: function() {
+
+      // 新建一个前缀输入框的实例
+      self.textviewPrefix = UITextView.new()
+      self.textviewPrefix.font = UIFont.systemFontOfSize(16);
+      self.textviewPrefix.layer.cornerRadius = 8
+      self.textviewPrefix.backgroundColor = UIColor.grayColor().colorWithAlphaComponent(0.3)
+      self.view.addSubview(self.textviewPrefix)
+      self.textviewPrefix.text = self.prefix
+      self.textviewPrefix.bounces = true
+
+
+      // 新建一个粘贴按钮的实例
+      self.pasteButton = UIButton.buttonWithType(0);
+      // 点击后执行的方法 pasteButtonTapped
+      self.setButtonLayout(self.pasteButton,"pasteButtonTapped:")
+      self.pasteButton.layer.cornerRadius = 5
+      self.pasteButton.setTitleForState("Paste",0)
+      self.pasteButton.titleLabel.font = UIFont.systemFontOfSize(18);
+
+
+      // 新建一个复制按钮的实例
+      self.copyButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.copyButton,"copyButtonTapped:")
+      self.copyButton.layer.cornerRadius = 5
+      self.copyButton.setTitleForState("Copy",0)
+      self.copyButton.titleLabel.font = UIFont.systemFontOfSize(18);
+
+
+      // self.moveGesture0 = new UIPanGestureRecognizer(self,"onMoveGesture:")
+      // self.pasteButton.addGestureRecognizer(self.moveGesture0)
+      // self.moveGesture0.view.hidden = false
+      // self.moveGesture0.addTargetAction(self,"onMoveGesture:")
+      self.moveGesture1 = new UIPanGestureRecognizer(self,"onMoveGesture:")
+      self.optionButton.addGestureRecognizer(self.moveGesture1)
+      self.moveGesture1.view.hidden = false
+      self.moveGesture1.addTargetAction(self,"onMoveGesture:")
+      self.moveGesture2 = new UIPanGestureRecognizer(self,"onMoveGesture:")
+      self.transformButton.addGestureRecognizer(self.moveGesture2)
+      self.moveGesture2.view.hidden = false
+      self.moveGesture2.addTargetAction(self,"onMoveGesture:")
+      self.moveGesture = new UIPanGestureRecognizer(self,"onMoveGesture:")
+      self.moveButton.addGestureRecognizer(self.moveGesture)
+      self.moveGesture.view.hidden = false
+      self.moveGesture.addTargetAction(self,"onMoveGesture:")
+
+      self.resizeGesture = new UIPanGestureRecognizer(self,"onResizeGesture:")
+      self.closeButton.addGestureRecognizer(self.resizeGesture)
+      self.resizeGesture.view.hidden = false
+      self.resizeGesture.addTargetAction(self,"onResizeGesture:")
+    },
+    viewWillAppear: function(animated) {
+    },
+    viewWillDisappear: function(animated) {
+    },
+  viewWillLayoutSubviews: function() {
     if (self.miniMode) {
       return
     }
@@ -140,23 +162,26 @@ viewWillLayoutSubviews: function() {
     viewFrame.x = 5
     viewFrame.height = halfHeight
     viewFrame.width = viewFrame.width -10
+
     self.textviewInput.frame = viewFrame
+
     self.pasteButton.frame = {  x: viewFrame.width-60,  y: viewFrame.height-30,  width: 60,  height: 30,};
     viewFrame.y = 10+halfHeight
+
     self.textviewOutput.frame = viewFrame
+
     self.copyButton.frame = {  x: viewFrame.width-60,  y: halfHeight+viewFrame.height-25,  width: 60,  height: 30,};
     viewFrame.y = 15+halfHeight*2
     viewFrame.height = 45
     viewFrame.width = halfWidth
 
-    self.textviewDelim.frame = viewFrame
+    self.textviewDelimeter.frame = viewFrame
+
     self.transformButton.frame = {  x: xLeft+5,  y: yBottom-35,  width: viewFrame.width,  height: 30,};
     viewFrame.x = 10+halfWidth
+
     self.textviewPrefix.frame = viewFrame
     self.optionButton.frame = {  x: viewFrame.x,  y: yBottom-35,  width: viewFrame.width-30,  height: 30,}
-
-
-
   },
   scrollViewDidScroll: function() {
   },
@@ -168,6 +193,8 @@ viewWillLayoutSubviews: function() {
     self.transformButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
     self.transformButton.layer.opacity = 0.5
     if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
+
+    // 菜单控制
     var menuController = MenuController.new();
     menuController.commandTable = [
       {title:'Title case convert', object:self, selector:'setOption:', param:1, checked:self.mode === 1},
@@ -189,7 +216,7 @@ viewWillLayoutSubviews: function() {
   setOption: function (params) {
     if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
     self.mode = params
-    NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
+    NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delimiter:self.delimiter,prefix:self.prefix},"mnTextHandler")
   },
   transform: function() {
     let input = self.textviewInput.text
@@ -201,12 +228,12 @@ viewWillLayoutSubviews: function() {
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         break;
       case 2:  // 分割
-        self.delm = self.textviewDelim.text
-        self.pref = self.textviewPrefix.text
-        self.textviewOutput.text = input.splitItem(self.delm,self.pref)
+        self.delimiter = self.textviewDelimeter.text
+        self.prefix = self.textviewPrefix.text
+        self.textviewOutput.text = input.splitItem(self.delimiter, self.prefix)
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         // 把配置写到系统里
-        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
+        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode, delimiter:self.delimiter, prefix:self.prefix}, "mnTextHandler")
         break;
       case 3:  // 转小写
         // 输出框的文本用 toTitleCase() 方法处理
@@ -215,20 +242,20 @@ viewWillLayoutSubviews: function() {
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         break;
       case 4:  // 转 MN 标签
-        self.delm = self.textviewDelim.text
-        self.pref = self.textviewPrefix.text
-        self.textviewOutput.text = input.keyWords2MNTag(self.delm,self.pref)
+        self.delimiter = self.textviewDelimeter.text
+        self.prefix = self.textviewPrefix.text
+        self.textviewOutput.text = input.keyWords2MNTag(self.delimiter, self.prefix)
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         // 把配置写到系统里
-        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
+        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode, delimiter:self.delimiter, prefix:self.prefix}, "mnTextHandler")
         break;
       case 5: // 查找替换
-        self.delm = self.textviewDelim.text
-        self.pref = self.textviewPrefix.text
-        self.textviewOutput.text = input.findReplace(self.delm,self.pref)
+        self.search = self.textviewDelimeter.text
+        self.replacement = self.textviewPrefix.text
+        self.textviewOutput.text = input.findReplace(self.search, self.replacement)
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         // 把配置写到系统里
-        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delm:self.delm,pref:self.pref},"MNTextHandler")
+        NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode, search:self.search, replacement:self.replacement},"mnTextHandler")
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -243,30 +270,18 @@ viewWillLayoutSubviews: function() {
     self.optionButton.layer.opacity = 0.5
   },
   pasteButtonTapped: function() {
-    // self.mode = 1
-    // self.pasteButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
-    // self.pasteButton.layer.opacity = 1.0
-    // self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    // self.optionButton.layer.opacity = 0.5
-    // self.transformButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    // self.transformButton.layer.opacity = 0.5
+    // 将剪切板的内容输出到 input 框
     self.textviewInput.text = UIPasteboard.generalPasteboard().string
   },
   copyButtonTapped: function() {
-    // self.mode = 1
-    // self.pasteButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
-    // self.pasteButton.layer.opacity = 1.0
-    // self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    // self.optionButton.layer.opacity = 0.5
-    // self.transformButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
-    // self.transformButton.layer.opacity = 0.5
+    // 将 output 框的内容复制到剪切板
     UIPasteboard.generalPasteboard().string = self.textviewOutput.text
   },
   closeButtonTapped: function() {
+    // 隐藏窗口
     self.view.hidden = true;
-    },
+  },
   onMoveGesture:function (gesture) {
-
     let locationToMN = gesture.locationInView(self.appInstance.studyController(self.view.window).view)
     if ( (Date.now() - self.moveDate) > 100) {
       let translation = gesture.translationInView(self.appInstance.studyController(self.view.window).view)
@@ -315,7 +330,8 @@ viewWillLayoutSubviews: function() {
     self.currentFrame  = self.view.frame
   },
 });
-titleCaseController.prototype.setButtonLayout = function (button,targetAction) {
+
+mnTextHandlerController.prototype.setButtonLayout = function (button, targetAction) {
     button.autoresizingMask = (1 << 0 | 1 << 3);
     button.setTitleColorForState(UIColor.whiteColor(),0);
     button.setTitleColorForState(this.highlightColor, 1);
@@ -327,6 +343,9 @@ titleCaseController.prototype.setButtonLayout = function (button,targetAction) {
     }
     this.view.addSubview(button);
 }
+
+
+// 需求：将英文标题转化为规范格式
 String.prototype.toTitleCase = function () {
   let smallWords = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|v.?|vs.?|via)$/i
   let alphanumericPattern = /([A-Za-z0-9\u00C0-\u00FF])/
@@ -335,7 +354,10 @@ String.prototype.toTitleCase = function () {
 
   return this.replace(lowerBar, " ").split(wordSeparators)
     .map(function (current, index, array) {
+      // 先整体变成小写
       current = current.toLowerCase()
+      // 去掉首尾的空格
+      current = current.trim()
       if (
         /* Check for small words */
         current.search(smallWords) > -1 &&

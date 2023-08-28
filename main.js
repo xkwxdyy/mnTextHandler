@@ -1,27 +1,41 @@
-
 JSB.newAddon = function (mainPath) {
+  // 加载 webviewController.js
+  // TODO：require 相当于 LaTeX 的 \input 吗？
+  // 只是加载里面的代码还是有额外的处理？
   JSB.require('webviewController');
-  var MNTitleCaseClass = JSB.defineClass(
-    'MNTitleCase : JSExtension',
-    { /* Instance members */
+  // 定义一个类，这个类是插件主体
+  var MNTextHandlerClass = JSB.defineClass(
+    'mnTextHandler : JSExtension',
+    {
+      // 定义插件的生命周期的一些行为
+      /* Instance members */
+
+      // 用于 MarginNote 开启一个窗口后执行代码
       sceneWillConnect: function () { //Window initialize
+        // 调用 Application 中的 sharedInstance() 方法，该方法会返回一个类的实例，
+        // 换而言之，使用上述代码等同于使用new来创建一个实例。
+        // 来自：https://is.gd/RTn3DE
         self.appInstance = Application.sharedInstance();
-        self.addonController = titleCaseController.new();
+        self.addonController = mnTextHandlerController.new();  // mnTextHandlerController 在 webviewController.js 中定义
         self.addonController.mainPath = mainPath;
         self.rect = '{{0, 0}, {10, 10}}';
         self.arrow = 1;
       },
 
+      // 用于MarginNote关闭一个窗口后执行代码
       sceneDidDisconnect: function () { // Window disconnect
 
       },
 
+      // 用于MarginNote重新激活一个窗口后执行代码
       sceneWillResignActive: function () { // Window resign active
       },
 
+      // 用于MarginNote激活一个窗口后执行代码
       sceneDidBecomeActive: function () { // Window become active
       },
 
+      // 用于MarginNote打开一个笔记本后执行代码
       notebookWillOpen: function (notebookid) {
         if (self.appInstance.studyController(self.window).studyMode < 3) {
           self.appInstance.studyController(self.window).refreshAddonCommands();
@@ -69,7 +83,8 @@ JSB.newAddon = function (mainPath) {
             self.addonController.currentFrame = currentFrame
         }
       },
-
+      
+      // 查询插件命令状态
       queryAddonCommandStatus: function () {
         if (self.appInstance.studyController(self.window).studyMode < 3) {
           return {
@@ -126,5 +141,5 @@ JSB.newAddon = function (mainPath) {
       }
     }
   );
-  return MNTitleCaseClass;
+  return MNTextHandlerClass;
 };
