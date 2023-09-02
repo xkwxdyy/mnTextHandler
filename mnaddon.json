@@ -1,8 +1,8 @@
 {
-    "addonid": "marginnote.extension.mnTextHandler",
+    "addonid": "marginnote.extension.mntexthandler",
     "author": "Linlifei and XiaKangWei",
     "title": "mn Text-Handler",
-    "version": "0.4",
+    "version": "1.1",
     "marginnote_version_min": "3.7.11",
     "cert_key": ""
 }

@@ -102,6 +102,7 @@ JSB.newAddon = function (mainPath) {
         if (self.addonController.view.hidden) {
           return
         }
+        // 用户从文档中选择的文本自动填充到输入框中
         let textSelected  = sender.userInfo.documentController.selectionText
         if (textSelected) {
           self.addonController.textviewInput.text = textSelected

@@ -347,23 +347,29 @@ mnTextHandlerController.prototype.setButtonLayout = function (button, targetActi
 
 // 需求：将英文标题转化为规范格式
 String.prototype.toTitleCase = function () {
+  'use strict'
   let smallWords = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|v.?|vs.?|via)$/i
   let alphanumericPattern = /([A-Za-z0-9\u00C0-\u00FF])/
+  /* note there is a capturing group, so the separators will also be included in the returned list */
   let wordSeparators = /([ :–—-])/
   let lowerBar = /_/g;
+  /* regular expression: remove the space character, punctuation (.,;:!?), 
+     dash and lower bar at both ends of the string */
+  let trimBeginEndPattern = /^[\s.,;:!?_\-]*([a-zA-Z0-9].*[a-zA-Z0-9])[\s.,;:!?_\-]*$/g;
 
-  return this.replace(lowerBar, " ").split(wordSeparators)
+  let lowerThis = this.toLowerCase()
+  return lowerThis.replace(trimBeginEndPattern,"$1")
+    .replace(lowerBar, " ")
+    .split(wordSeparators)
     .map(function (current, index, array) {
-      // 先整体变成小写
-      current = current.toLowerCase()
-      // 去掉首尾的空格
-      current = current.trim()
       if (
         /* Check for small words */
         current.search(smallWords) > -1 &&
         /* Skip first and last word */
         index !== 0 &&
         index !== array.length - 1 &&
+        /* cope with the situation such as: 1. the conjugation operator */
+        array.slice(0,index-1).join('').search(/a-zA-Z/)>-1 &&
         /* Ignore title end and subtitle start */
         array[index - 3] !== ':' &&
         array[index + 1] !== ':' &&
@@ -375,7 +381,7 @@ String.prototype.toTitleCase = function () {
       }
 
       /* Ignore intentional capitalization */
-      if (current.substr(1).search(/[A-Z]|\../) > -1) {
+      if (current.substring(1).search(/[A-Z]|\../) > -1) {
         return current
       }
 
@@ -389,7 +395,7 @@ String.prototype.toTitleCase = function () {
         return match.toUpperCase()
       })
     })
-    .join('')
+    .join('') // convert the list into a string
 }
 
 // 需求：关键词分割，并转换为无序列表
@@ -407,9 +413,9 @@ String.prototype.splitItem = function (splitLabel, preLabel) {
   // 去掉首位的标点符号
   let thisHandleVersion = this.replace(punctuationDeletePattern, "$1")
   // 再去掉一次空格（防止标点符号附近有空格）
-  thisHandleVersion = thisHandleVersion.trim();
+  thisHandleVersion = thisHandleVersion.trimStart().trimEnd();
   if (splitLabelPattern.test(this)) {
-    let items = thisHandleVersion.split(splitLabel).map(item=>preLabel+item.trim()).join('\n')  // 用换行符链接
+    let items = thisHandleVersion.split(splitLabel).map(item=>preLabel+item.trimStart().trimEnd()).join('\n')  // 用换行符链接
     return items
   }else{
     return "No delimiter found"
@@ -433,7 +439,7 @@ String.prototype.keyWords2MNTag = function (splitLabel, preLabel) {
   // 去掉首位的标点符号
   let thisHandleVersion = this.replace(punctuationDeletePattern, "$1")
   // 再去掉一次空格（防止标点符号附近有空格）
-  thisHandleVersion = thisHandleVersion.trim();
+  thisHandleVersion = thisHandleVersion.trimStart().trimEnd();
   if (splitLabelPattern.test(this)) {
     let items = thisHandleVersion.split(splitLabel).map(item => preLabel + "#" + item.replace(mnTagPattern, "_")).join('\n')  // 用换行符链接
     // 将多个下划线合并为一个
