@@ -348,17 +348,17 @@ mnTextHandlerController.prototype.setButtonLayout = function (button, targetActi
 // 需求：将英文标题转化为规范格式
 String.prototype.toTitleCase = function () {
   'use strict'
-  let smallWords = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|v.?|vs.?|via)$/i
-  let alphanumericPattern = /([A-Za-z0-9\u00C0-\u00FF])/
+  let smallWords = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|v.?|vs.?|via)$/i;
+  let alphanumericPattern = /([A-Za-z0-9\u00C0-\u00FF])/;
   /* note there is a capturing group, so the separators will also be included in the returned list */
-  let wordSeparators = /([ :–—-])/
+  let wordSeparators = /([ :–—-])/;
   let lowerBar = /_/g;
   /* regular expression: remove the space character, punctuation (.,;:!?), 
      dash and lower bar at both ends of the string */
   let trimBeginEndPattern = /^[\s.,;:!?_\-]*([a-zA-Z0-9].*[a-zA-Z0-9])[\s.,;:!?_\-]*$/g;
+  let romanNumberPattern = /^(I|II|III|IV|V|VI|VII|VIII|IX|X)$/i;
 
-  let lowerThis = this.toLowerCase()
-  return lowerThis.replace(trimBeginEndPattern,"$1")
+  return this.toLowerCase().replace(trimBeginEndPattern,"$1")
     .replace(lowerBar, " ")
     .split(wordSeparators)
     .map(function (current, index, array) {
@@ -369,7 +369,7 @@ String.prototype.toTitleCase = function () {
         index !== 0 &&
         index !== array.length - 1 &&
         /* cope with the situation such as: 1. the conjugation operator */
-        array.slice(0,index-1).join('').search(/a-zA-Z/)>-1 &&
+        array.slice(0,index-1).join('').search(/[a-zA-Z]/) > -1 &&
         /* Ignore title end and subtitle start */
         array[index - 3] !== ':' &&
         array[index + 1] !== ':' &&
@@ -379,20 +379,25 @@ String.prototype.toTitleCase = function () {
       ) {
         return current.toLowerCase()
       }
+      
+      /* Uppercase roman numbers */
+      if (current.search(romanNumberPattern) > -1) {
+        return current.toUpperCase();
+      }
 
       /* Ignore intentional capitalization */
       if (current.substring(1).search(/[A-Z]|\../) > -1) {
-        return current
+        return current;
       }
 
       /* Ignore URLs */
       if (array[index + 1] === ':' && array[index + 2] !== '') {
-        return current
+        return current;
       }
 
       /* Capitalize the first letter */
       return current.replace(alphanumericPattern, function (match) {
-        return match.toUpperCase()
+        return match.toUpperCase();
       })
     })
     .join('') // convert the list into a string
