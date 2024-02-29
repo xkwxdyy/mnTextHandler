@@ -202,6 +202,7 @@ var mnTextHandlerController = JSB.defineClass(
       {title:'Convert to lower case', object:self, selector:'setOption:', param:3, checked:self.mode === 3},
       {title:'Keywords to MNtag', object:self, selector:'setOption:', param:4, checked:self.mode === 4},
       {title:'Find and replace', object:self, selector:'setOption:', param:5, checked:self.mode === 5},
+      {title:'Regular expression', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
     ];
     menuController.rowHeight = 35;
     menuController.preferredContentSize = {
@@ -257,6 +258,11 @@ var mnTextHandlerController = JSB.defineClass(
         // 把配置写到系统里
         NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode, search:self.search, replacement:self.replacement},"mnTextHandler")
         break;
+      case 6: // 正则表达式
+        self.search = self.textviewDelimeter.text
+        self.replacement = self.textviewPrefix.text
+        self.textviewOutput.text = input.regularExpression(self.search, self.replacement)
+        UIPasteboard.generalPasteboard().string = self.textviewOutput.text
       default:
         self.textviewOutput.text = "no results"
         break;
@@ -460,4 +466,19 @@ String.prototype.keyWords2MNTag = function (splitLabel, preLabel) {
 String.prototype.findReplace = function (search, replacement) {
   var target = this;
   return target.replace(new RegExp(search, 'g'), replacement);
+}
+
+// 正则表达式
+String.prototype.regularExpression = function (search, replacement) {
+  let target = this;
+  let searchPattern = search.match(/【(.*?)：(.*?)】/); // 使用非贪婪匹配来提取「xxxx」「yyyyy」部分
+  
+  // 检查搜索参数是否符合特定格式并提取「yyyyy」部分
+  if (searchPattern !== null && searchPattern.length === 3) {
+    // 如果搜索参数符合格式，重新赋值为正则表达式的搜索词
+    search = searchPattern[2];
+  }
+
+  // 将结果转化为所需的格式并返回
+  return `(/${search}/g, "${replacement}")`;
 }
