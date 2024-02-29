@@ -263,6 +263,7 @@ var mnTextHandlerController = JSB.defineClass(
         self.replacement = self.textviewPrefix.text
         self.textviewOutput.text = input.regularExpression(self.search, self.replacement)
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
+        break;
       default:
         self.textviewOutput.text = "no results"
         break;
