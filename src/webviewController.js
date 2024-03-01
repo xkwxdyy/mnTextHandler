@@ -472,12 +472,17 @@ String.prototype.findReplace = function (search, replacement) {
 // 正则表达式
 String.prototype.regularExpression = function (search, replacement) {
   let target = this;
-  let searchPattern = search.match(/【(.*?)：(.*?)】/); // 使用非贪婪匹配来提取「xxxx」「yyyyy」部分
-  
-  // 检查搜索参数是否符合特定格式并提取「yyyyy」部分
+
+  // 处理搜索字符串
+  let searchPattern = search.match(/【(.*?)：(.*?)】/); 
   if (searchPattern !== null && searchPattern.length === 3) {
-    // 如果搜索参数符合格式，重新赋值为正则表达式的搜索词
     search = searchPattern[2];
+  }
+
+  // 处理替换字符串
+  let replacementPattern = replacement.match(/【(.*?)：(.*?)】/); 
+  if (replacementPattern !== null && replacementPattern.length === 3) {
+    replacement = replacementPattern[2];
   }
 
   // 将结果转化为所需的格式并返回
