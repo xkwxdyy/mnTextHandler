@@ -101,7 +101,7 @@ var mnTextHandlerController = JSB.defineClass(
       self.textviewPrefix.bounces = true
 
 
-      // 新建一个粘贴按钮的实例
+      // 新建一个输入框的粘贴按钮的实例
       self.pasteButton = UIButton.buttonWithType(0);
       // 点击后执行的方法 pasteButtonTapped
       self.setButtonLayout(self.pasteButton,"pasteButtonTapped:")
@@ -110,28 +110,74 @@ var mnTextHandlerController = JSB.defineClass(
       self.pasteButton.titleLabel.font = UIFont.systemFontOfSize(18);
 
 
-      // 新建一个复制按钮的实例
+      // 新建一个输出框的复制按钮的实例
       self.copyButton = UIButton.buttonWithType(0);
       self.setButtonLayout(self.copyButton,"copyButtonTapped:")
       self.copyButton.layer.cornerRadius = 5
       self.copyButton.setTitleForState("Copy",0)
       self.copyButton.titleLabel.font = UIFont.systemFontOfSize(18);
 
+      // 新建一个查找框的复制按钮的实例
+      self.copySearchButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.copySearchButton,"copySearchButtonTapped:")
+      self.copySearchButton.layer.cornerRadius = 5
+      self.copySearchButton.setTitleForState("Copy",0)
+      self.copySearchButton.titleLabel.font = UIFont.systemFontOfSize(14);
+
+      // 新建一个替换框的复制按钮的实例
+      self.copyReplacementButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.copyReplacementButton,"copyReplacementButtonTapped:")
+      self.copyReplacementButton.layer.cornerRadius = 5
+      self.copyReplacementButton.setTitleForState("Copy",0)
+      self.copyReplacementButton.titleLabel.font = UIFont.systemFontOfSize(14);
+
+      // 新建一个查找框的粘贴按钮的实例
+      self.pasteSearchButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.pasteSearchButton,"pasteSearchButtonTapped:")
+      self.pasteSearchButton.layer.cornerRadius = 5
+      self.pasteSearchButton.setTitleForState("Paste",0)
+      self.pasteSearchButton.titleLabel.font = UIFont.systemFontOfSize(14);
+
+      // 新建一个替换框的粘贴按钮的实例
+      self.pasteReplacementButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.pasteReplacementButton,"pasteReplacementButtonTapped:")
+      self.pasteReplacementButton.layer.cornerRadius = 5
+      self.pasteReplacementButton.setTitleForState("Paste",0)
+      self.pasteReplacementButton.titleLabel.font = UIFont.systemFontOfSize(14);
+
+      // 新建一个替换框内容到查找框内容的按钮的实例
+      self.transformReplacementToSearchButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.transformReplacementToSearchButton,"transformReplacementToSearchButtonTapped:")
+      self.transformReplacementToSearchButton.layer.cornerRadius = 5
+      self.transformReplacementToSearchButton.setTitleForState("⬅️",0)
+      self.transformReplacementToSearchButton.titleLabel.font = UIFont.systemFontOfSize(18);
+
+
+      // 新建一个清空按钮的实例
+      self.clearButton = UIButton.buttonWithType(0);
+      // 点击后执行的方法 clearButtonTapped
+      self.setButtonLayout(self.clearButton,"clearButtonTapped:")
+      self.clearButton.layer.cornerRadius = 5
+      self.clearButton.setTitleForState("🗑",0)
+      self.clearButton.titleLabel.font = UIFont.systemFontOfSize(15);
+      self.clearButton.backgroundColor = UIColor.colorWithHexString("#f1dddc");
+
+
       // 新建一个按钮，用于左侧添加文本片段,加个type属性作为标识
       // 绑定到showSnippets函数，用来弹出菜单
       self.addSnipLeft = UIButton.buttonWithType(0);
       self.setButtonLayout(self.addSnipLeft,"showSnippets:")
       self.addSnipLeft.layer.cornerRadius = 5
-      self.addSnipLeft.setTitleForState("➕",0)
-      self.addSnipLeft.titleLabel.font = UIFont.systemFontOfSize(18);
+      self.addSnipLeft.setTitleForState("⬇️",0)
+      self.addSnipLeft.titleLabel.font = UIFont.systemFontOfSize(14);
       self.addSnipLeft.type = "left"
-      //再增加一个右侧输入框的
-      // 绑定到showSnippets函数，用来弹出菜单,加个type属性作为标识
+      // 再增加一个右侧输入框的
+      // 绑定到showSnippets函数，用来弹出菜单, 加个type属性作为标识
       self.addSnipRight = UIButton.buttonWithType(0);
       self.setButtonLayout(self.addSnipRight,"showSnippets:")
       self.addSnipRight.layer.cornerRadius = 5
-      self.addSnipRight.setTitleForState("➕",0)
-      self.addSnipRight.titleLabel.font = UIFont.systemFontOfSize(18);
+      self.addSnipRight.setTitleForState("⬇️",0)
+      self.addSnipRight.titleLabel.font = UIFont.systemFontOfSize(14);
       self.addSnipRight.type = "right"
       // self.moveGesture0 = new UIPanGestureRecognizer(self,"onMoveGesture:")
       // self.pasteButton.addGestureRecognizer(self.moveGesture0)
@@ -174,33 +220,44 @@ var mnTextHandlerController = JSB.defineClass(
     var halfWidth = (viewFrame.width-15)*0.5
     viewFrame.y = 5
     viewFrame.x = 5
-    viewFrame.height = halfHeight
+    viewFrame.height = halfHeight-30
     viewFrame.width = viewFrame.width -10
 
     self.textviewInput.frame = viewFrame
 
     self.pasteButton.frame = {  x: viewFrame.width-60,  y: viewFrame.height-30,  width: 60,  height: 30,};
-    viewFrame.y = 10+halfHeight
+    viewFrame.y = halfHeight - 10
+
+    self.clearButton.frame = {  x: xRight-80,  y: self.closeButton.frame.y,  width: 45,  height: 30,};
 
     self.textviewOutput.frame = viewFrame
 
-    self.copyButton.frame = {  x: viewFrame.width-60,  y: halfHeight+viewFrame.height-25,  width: 60,  height: 30,};
+    self.copyButton.frame = {  x: viewFrame.width-60,  y: halfHeight+viewFrame.height-40,  width: 60,  height: 30};
     viewFrame.y = 15+halfHeight*2
     viewFrame.height = 45
-    viewFrame.width = halfWidth
+    viewFrame.width = halfWidth-30
 
-    self.textviewDelimeter.frame = viewFrame
-    //控制左侧按钮的范围，限制在textviewPrefix的右侧
-    self.addSnipLeft.frame = {x:viewFrame.x+viewFrame.width-40,y:viewFrame.y+5,width:35,height:35}
+    self.textviewDelimeter.frame = {  x: viewFrame.x,  y: yBottom-125,  width: viewFrame.width-50,  height: 80}
+    // 控制左侧按钮的范围，限制在 textviewPrefix 的右侧
+    self.addSnipLeft.frame = {x:self.textviewDelimeter.frame.x + self.textviewDelimeter.frame.width,y:self.textviewDelimeter.frame.y-10,width:35,height:35}
 
-    self.transformButton.frame = {  x: xLeft+5,  y: yBottom-35,  width: viewFrame.width,  height: 30,};
+    // 查找框的复制按钮和粘贴按钮放在 addSnipLeft 的下面
+    self.copySearchButton.frame = {  x: self.addSnipLeft.frame.x,  y: self.addSnipLeft.frame.y+self.addSnipLeft.frame.height,  width: 50,  height: 30};
+    self.pasteSearchButton.frame = {  x: self.addSnipLeft.frame.x,  y: self.copySearchButton.frame.y+self.copySearchButton.frame.height,  width: 50,  height: 30};
+
+    self.textviewPrefix.frame = {  x: viewFrame.x- 23+ viewFrame.width + 70 ,  y: yBottom-125,  width: viewFrame.width-30,  height: 80}
+    // 控制右侧按钮的范围,限制在textviewDelimeter的右侧
+    self.addSnipRight.frame = {x:self.textviewPrefix.frame.x + self.textviewPrefix.frame.width,y:self.textviewPrefix.frame.y-10,width:35,height:35}
+    // 替换框的复制按钮和粘贴按钮放在 addSnipRight 的下面
+    self.copyReplacementButton.frame = {  x: self.addSnipRight.frame.x,  y: self.addSnipRight.frame.y+self.addSnipRight.frame.height,  width: 50,  height: 30};
+    self.pasteReplacementButton.frame = {  x: self.addSnipRight.frame.x,  y: self.copyReplacementButton.frame.y+self.copyReplacementButton.frame.height,  width: 50,  height: 30};
+
+    self.transformReplacementToSearchButton.frame = {  x: self.textviewPrefix.frame.x - 45 ,  y: self.textviewPrefix.frame.y+self.textviewPrefix.frame.height/2-40,  width: 45,  height: 80};
+
+    self.transformButton.frame = {  x: xLeft+5,  y: yBottom-35,  width: viewFrame.width,  height: 30};
     viewFrame.x = 10+halfWidth
 
-    self.textviewPrefix.frame = viewFrame
-    //控制右侧按钮的范围,限制在textviewDelimeter的右侧
-    self.addSnipRight.frame = {x:viewFrame.x+viewFrame.width-40,y:viewFrame.y+5,width:35,height:35}
-
-    self.optionButton.frame = {  x: viewFrame.x,  y: yBottom-35,  width: viewFrame.width-30,  height: 30,}
+    self.optionButton.frame = {  x: viewFrame.x - 20,  y: yBottom-35,  width: viewFrame.width-40,  height: 30,}
   },
   scrollViewDidScroll: function() {
   },
@@ -230,13 +287,13 @@ var mnTextHandlerController = JSB.defineClass(
     })
     menuController.rowHeight = 35;
     menuController.preferredContentSize = {
-      width: 200,
+      width: 150,
       height: menuController.rowHeight * menuController.commandTable.length
     };
     var studyController = Application.sharedInstance().studyController(self.view.window);
     self.view.popoverController = new UIPopoverController(menuController);
     var r = button.convertRectToView(button.bounds,studyController.view);
-    self.view.popoverController.presentPopoverFromRect(r, studyController.view, 1 << 1, true);
+    self.view.popoverController.presentPopoverFromRect(r, studyController.view, 1 << 0, true);  // 1 << 0 是指箭头朝下，1 << 1 是指箭头朝上，1 << 2 是指箭头朝左，1 << 3 是指箭头朝右
   } catch (error) {
     showHUD(error)
   }
@@ -353,6 +410,68 @@ var mnTextHandlerController = JSB.defineClass(
   copyButtonTapped: function() {
     // 将 output 框的内容复制到剪切板
     UIPasteboard.generalPasteboard().string = self.textviewOutput.text
+  },
+  copySearchButtonTapped: function() {
+    // 将查找的内容复制到剪切板
+    UIPasteboard.generalPasteboard().string = self.textviewDelimeter.text
+  },
+  copyReplacementButtonTapped: function() {
+    // 将替换框内容复制到剪切板
+    UIPasteboard.generalPasteboard().string = self.textviewPrefix.text
+  },
+  pasteSearchButtonTapped: function() {
+    // 将剪切板的内容输出到查找框
+    self.textviewDelimeter.text = UIPasteboard.generalPasteboard().string
+  },
+  pasteReplacementButtonTapped: function() {
+    // 获取剪切板的内容
+    let clipboardContent = UIPasteboard.generalPasteboard().string;
+    
+    // 获取 self.textviewDelimeter.text 的内容
+    let delimiterContent = self.textviewDelimeter.text;
+
+    // 检测 self.textviewDelimeter.text 的内容是否满足判断条件
+    let skipProcessing = delimiterContent.match(/(\/【.*】\/g,"")|【.*】/) !== null;
+
+    if (!skipProcessing) {
+        // 匹配所有【xxx：yyy】形式的内容
+        let matches = clipboardContent.match(/【[^：]+：([^】]+)】/g);
+        if (matches) {
+            // 处理所有匹配的内容，并替换
+            for (let i = 0; i < matches.length; i++) {
+                clipboardContent = clipboardContent.replace(matches[i], matches[i].match(/【[^：]+：([^】]+)】/)[1]);
+            }
+            // 设置到替换框
+            self.textviewPrefix.text = clipboardContent;
+            return; // 提前结束函数
+        }
+    }
+
+    // 原来的处理逻辑
+    let regex = /(一|二|三|四|五|六|七|八|九)级标题/;
+    let match = clipboardContent.match(regex);
+    
+    if (match) {
+        // 如果匹配成功，去掉“x级标题”四个字
+        let replacedContent = clipboardContent.replace(/(一|二|三|四|五|六|七|八|九)级标题/g, '');
+        // 将处理后的内容输出到替换框
+        self.textviewPrefix.text = replacedContent;
+    } else {
+        // 如果剪切板内容中不包含指定的内容，直接输出到替换框
+        self.textviewPrefix.text = clipboardContent;
+    }
+  },
+  transformReplacementToSearchButtonTapped: function() {
+    // 将替换框的内容复制到查找框
+    self.textviewDelimeter.text = self.textviewPrefix.text;
+  },
+  clearButtonTapped: function() {
+    // 清空 input 框和 output 框的内容
+    self.textviewInput.text = ""
+    self.textviewOutput.text = ""
+    // 清空 self.textviewDelimeter.text 和 self.textviewPrefix.text
+    self.textviewDelimeter.text = ""
+    self.textviewPrefix.text = ""
   },
   closeButtonTapped: function() {
     // 隐藏窗口
