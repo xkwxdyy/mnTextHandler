@@ -242,10 +242,18 @@ var mnTextHandlerController = JSB.defineClass(
   }
   },
   setTextLeft: function(text) {
-    self.textviewDelimeter.text = text
+    self.textviewDelimeter.text = text;
+    // 关闭弹窗
+    if (self.view.popoverController) {
+      self.view.popoverController.dismissPopoverAnimated(true);
+    }
   },
   setTextRight: function(text) {
-    self.textviewPrefix.text = text
+    self.textviewPrefix.text = text;
+    // 关闭弹窗
+    if (self.view.popoverController) {
+      self.view.popoverController.dismissPopoverAnimated(true);
+    }
   },
   showOption: function(sender) {
     self.optionButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
