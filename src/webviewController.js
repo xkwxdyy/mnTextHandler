@@ -469,22 +469,33 @@ String.prototype.findReplace = function (search, replacement) {
   return target.replace(new RegExp(search, 'g'), replacement);
 }
 
-// 正则表达式
-String.prototype.regularExpression = function (search, replacement) {
-  let target = this;
-
-  // 处理搜索字符串
-  let searchPattern = search.match(/【(.*?)：(.*?)】/); 
-  if (searchPattern !== null && searchPattern.length === 3) {
-    search = searchPattern[2];
-  }
-
-  // 处理替换字符串
-  let replacementPattern = replacement.match(/【(.*?)：(.*?)】/); 
-  if (replacementPattern !== null && replacementPattern.length === 3) {
-    replacement = replacementPattern[2];
-  }
-
-  // 将结果转化为所需的格式并返回
-  return `(/${search}/g, "${replacement}")`;
+// 转义正则表达式中的特殊字符
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+String.prototype.regularExpression = function (search, replacement) {
+  let trimmedSearch = search.replace(/\s/g, '');
+  let isSpecialSearchPattern = trimmedSearch === '(/【.*】/g,"")';
+
+  if (isSpecialSearchPattern) {
+    search = '【.*】';
+  } else {
+    // 提取【xxxx：yyyyy】格式
+    let searchPattern = search.match(/【(.*?)：(.*?)】/);
+    if (searchPattern) {
+      search = searchPattern[2];  // 直接使用未转义的特殊部分
+    }
+
+    // 现在进行转义处理
+    search = escapeRegExp(search);
+
+    // 预处理 replacement
+    let replacementPattern = replacement.match(/【(.*?)：(.*?)】/);
+    if (replacementPattern) {
+      replacement = replacementPattern[2];
+    }
+  }
+
+  return `(/${search}/g, "${replacement}")`;
+};
