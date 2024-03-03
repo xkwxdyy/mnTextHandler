@@ -162,13 +162,29 @@ var mnTextHandlerController = JSB.defineClass(
       self.clearButton.titleLabel.font = UIFont.systemFontOfSize(15);
       self.clearButton.backgroundColor = UIColor.colorWithHexString("#f1dddc");
 
+      // 新建一个清空 textviewDelimeter 的按钮
+      self.clearDelimeterButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.clearDelimeterButton,"clearDelimeterButtonTapped:")
+      self.clearDelimeterButton.layer.cornerRadius = 5
+      self.clearDelimeterButton.setTitleForState("🗑",0)
+      self.clearDelimeterButton.titleLabel.font = UIFont.systemFontOfSize(15);
+      self.clearDelimeterButton.backgroundColor = UIColor.colorWithHexString("#f1dddc");
+
+      // 新建一个清空 textviewPrefix 的按钮
+      self.clearPrefixButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.clearPrefixButton,"clearPrefixButtonTapped:")
+      self.clearPrefixButton.layer.cornerRadius = 5
+      self.clearPrefixButton.setTitleForState("🗑",0)
+      self.clearPrefixButton.titleLabel.font = UIFont.systemFontOfSize(15);
+      self.clearPrefixButton.backgroundColor = UIColor.colorWithHexString("#f1dddc");
+
 
       // 新建一个按钮，用于左侧添加文本片段,加个type属性作为标识
       // 绑定到showSnippets函数，用来弹出菜单
       self.addSnipLeft = UIButton.buttonWithType(0);
       self.setButtonLayout(self.addSnipLeft,"showSnippets:")
       self.addSnipLeft.layer.cornerRadius = 5
-      self.addSnipLeft.setTitleForState("⬇️",0)
+      self.addSnipLeft.setTitleForState("📍",0)
       self.addSnipLeft.titleLabel.font = UIFont.systemFontOfSize(14);
       self.addSnipLeft.type = "left"
       // 再增加一个右侧输入框的
@@ -176,7 +192,7 @@ var mnTextHandlerController = JSB.defineClass(
       self.addSnipRight = UIButton.buttonWithType(0);
       self.setButtonLayout(self.addSnipRight,"showSnippets:")
       self.addSnipRight.layer.cornerRadius = 5
-      self.addSnipRight.setTitleForState("⬇️",0)
+      self.addSnipRight.setTitleForState("📍",0)
       self.addSnipRight.titleLabel.font = UIFont.systemFontOfSize(14);
       self.addSnipRight.type = "right"
       // self.moveGesture0 = new UIPanGestureRecognizer(self,"onMoveGesture:")
@@ -239,7 +255,7 @@ var mnTextHandlerController = JSB.defineClass(
 
     self.textviewDelimeter.frame = {  x: viewFrame.x,  y: yBottom-125,  width: viewFrame.width-50,  height: 80}
     // 控制左侧按钮的范围，限制在 textviewPrefix 的右侧
-    self.addSnipLeft.frame = {x:self.textviewDelimeter.frame.x + self.textviewDelimeter.frame.width,y:self.textviewDelimeter.frame.y-10,width:35,height:35}
+    self.addSnipLeft.frame = {x:self.textviewDelimeter.frame.x + self.textviewDelimeter.frame.width,y:self.textviewDelimeter.frame.y-10,width:50,height:35}
 
     // 查找框的复制按钮和粘贴按钮放在 addSnipLeft 的下面
     self.copySearchButton.frame = {  x: self.addSnipLeft.frame.x,  y: self.addSnipLeft.frame.y+self.addSnipLeft.frame.height,  width: 50,  height: 30};
@@ -247,10 +263,12 @@ var mnTextHandlerController = JSB.defineClass(
 
     self.textviewPrefix.frame = {  x: viewFrame.x- 23+ viewFrame.width + 70 ,  y: yBottom-125,  width: viewFrame.width-30,  height: 80}
     // 控制右侧按钮的范围,限制在textviewDelimeter的右侧
-    self.addSnipRight.frame = {x:self.textviewPrefix.frame.x + self.textviewPrefix.frame.width,y:self.textviewPrefix.frame.y-10,width:35,height:35}
+    self.addSnipRight.frame = {x:self.textviewPrefix.frame.x + self.textviewPrefix.frame.width,y:self.textviewPrefix.frame.y-10,width:50,height:35}
     // 替换框的复制按钮和粘贴按钮放在 addSnipRight 的下面
     self.copyReplacementButton.frame = {  x: self.addSnipRight.frame.x,  y: self.addSnipRight.frame.y+self.addSnipRight.frame.height,  width: 50,  height: 30};
     self.pasteReplacementButton.frame = {  x: self.addSnipRight.frame.x,  y: self.copyReplacementButton.frame.y+self.copyReplacementButton.frame.height,  width: 50,  height: 30};
+    self.clearDelimeterButton.frame = {  x: self.textviewDelimeter.frame.x+self.textviewDelimeter.frame.width-50,  y: self.textviewDelimeter.frame.y+self.textviewDelimeter.frame.height-30,  width: 50,  height: 30};
+    self.clearPrefixButton.frame = {  x: self.textviewPrefix.frame.x+self.textviewPrefix.frame.width-50,  y: self.textviewPrefix.frame.y+self.textviewPrefix.frame.height-30,  width: 50,  height: 30};
 
     self.transformReplacementToSearchButton.frame = {  x: self.textviewPrefix.frame.x - 45 ,  y: self.textviewPrefix.frame.y+self.textviewPrefix.frame.height/2-40,  width: 45,  height: 80};
 
@@ -422,8 +440,18 @@ var mnTextHandlerController = JSB.defineClass(
     UIPasteboard.generalPasteboard().string = self.textviewPrefix.text
   },
   pasteSearchButtonTapped: function() {
-    // 将剪切板的内容输出到查找框
-    self.textviewDelimeter.text = UIPasteboard.generalPasteboard().string
+    // 获取剪切板的内容
+    var clipboardContent = UIPasteboard.generalPasteboard().string;
+
+    // 匹配【xxx：yyy】形式的内容，并提取出yyy部分
+    var match = clipboardContent.match(/【[^：]+：([^】]+)】/);
+    if (match && match[1]) {
+        // 如果存在匹配项，就更新剪切板内容为yyy部分
+        clipboardContent = match[1];
+    }
+
+    // 将预处理后的或原始的剪切板内容输出到查找框
+    self.textviewDelimeter.text = clipboardContent;
   },
   pasteReplacementButtonTapped: function() {
     // 获取剪切板的内容
@@ -432,8 +460,8 @@ var mnTextHandlerController = JSB.defineClass(
     // 获取 self.textviewDelimeter.text 的内容
     let delimiterContent = self.textviewDelimeter.text;
 
-    // 检测 self.textviewDelimeter.text 的内容是否满足判断条件
-    let skipProcessing = delimiterContent.match(/(\/【.*】\/g,"")|【.*】/) !== null;
+    // 检测 self.textviewDelimeter.text 的内容是否为特定的字符串
+    let skipProcessing = delimiterContent === '(/【.*】/g, "")' || delimiterContent === '【.*】';
 
     if (!skipProcessing) {
         // 匹配所有【xxx：yyy】形式的内容
@@ -473,6 +501,14 @@ var mnTextHandlerController = JSB.defineClass(
     self.textviewOutput.text = ""
     // 清空 self.textviewDelimeter.text 和 self.textviewPrefix.text
     self.textviewDelimeter.text = ""
+    self.textviewPrefix.text = ""
+  },
+  clearDelimeterButtonTapped: function() {
+    // 清空 self.textviewDelimeter.text
+    self.textviewDelimeter.text = ""
+  },
+  clearPrefixButtonTapped: function() {
+    // 清空 self.textviewPrefix.text
     self.textviewPrefix.text = ""
   },
   closeButtonTapped: function() {
