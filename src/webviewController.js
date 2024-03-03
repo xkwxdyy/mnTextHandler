@@ -270,7 +270,9 @@ var mnTextHandlerController = JSB.defineClass(
     let type = button.type //分辨是left还是right
     //获取MNSnippets中存储的文本
     let snippets = NSUserDefaults.standardUserDefaults().objectForKey('MNSnippets_prompts')
-    let snipNames = Object.keys(snippets)
+    let config = NSUserDefaults.standardUserDefaults().objectForKey('MNSnippets_config')
+    //config里的promptNames存储顺序
+    let snipNames = config.promptNames
 
 
     // 菜单控制
