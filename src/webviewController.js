@@ -57,7 +57,6 @@ var mnTextHandlerController = JSB.defineClass(
       self.optionButton.setTitleForState("Option",0)
       self.optionButton.titleLabel.font = UIFont.systemFontOfSize(16);
 
-
       // 新建一个 input 框的实例
       self.textviewInput = UITextView.new()
       self.textviewInput.font = UIFont.systemFontOfSize(16);
@@ -118,7 +117,22 @@ var mnTextHandlerController = JSB.defineClass(
       self.copyButton.setTitleForState("Copy",0)
       self.copyButton.titleLabel.font = UIFont.systemFontOfSize(18);
 
-
+      // 新建一个按钮，用于左侧添加文本片段,加个type属性作为标识
+      // 绑定到showSnippets函数，用来弹出菜单
+      self.addSnipLeft = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.addSnipLeft,"showSnippets:")
+      self.addSnipLeft.layer.cornerRadius = 5
+      self.addSnipLeft.setTitleForState("➕",0)
+      self.addSnipLeft.titleLabel.font = UIFont.systemFontOfSize(18);
+      self.addSnipLeft.type = "left"
+      //再增加一个右侧输入框的
+      // 绑定到showSnippets函数，用来弹出菜单,加个type属性作为标识
+      self.addSnipRight = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.addSnipRight,"showSnippets:")
+      self.addSnipRight.layer.cornerRadius = 5
+      self.addSnipRight.setTitleForState("➕",0)
+      self.addSnipRight.titleLabel.font = UIFont.systemFontOfSize(18);
+      self.addSnipRight.type = "right"
       // self.moveGesture0 = new UIPanGestureRecognizer(self,"onMoveGesture:")
       // self.pasteButton.addGestureRecognizer(self.moveGesture0)
       // self.moveGesture0.view.hidden = false
@@ -176,14 +190,62 @@ var mnTextHandlerController = JSB.defineClass(
     viewFrame.width = halfWidth
 
     self.textviewDelimeter.frame = viewFrame
+    //控制左侧按钮的范围，限制在textviewPrefix的右侧
+    self.addSnipLeft.frame = {x:viewFrame.x+viewFrame.width-40,y:viewFrame.y+5,width:35,height:35}
 
     self.transformButton.frame = {  x: xLeft+5,  y: yBottom-35,  width: viewFrame.width,  height: 30,};
     viewFrame.x = 10+halfWidth
 
     self.textviewPrefix.frame = viewFrame
+    //控制右侧按钮的范围,限制在textviewDelimeter的右侧
+    self.addSnipRight.frame = {x:viewFrame.x+viewFrame.width-40,y:viewFrame.y+5,width:35,height:35}
+
     self.optionButton.frame = {  x: viewFrame.x,  y: yBottom-35,  width: viewFrame.width-30,  height: 30,}
   },
   scrollViewDidScroll: function() {
+  },
+  showSnippets: function (button) {//button就是触发这个函数的那个按钮
+    //用try catch的方式获取报错
+  try {
+    if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
+      
+
+    let type = button.type //分辨是left还是right
+    //获取MNSnippets中存储的文本
+    let snippets = NSUserDefaults.standardUserDefaults().objectForKey('MNSnippets_prompts')
+    let snipNames = Object.keys(snippets)
+
+
+    // 菜单控制
+    var menuController = MenuController.new();
+    menuController.commandTable = snipNames.map(snipName=>{
+      let snippet = snippets[snipName]
+      switch (type) {
+        case "left"://left调用setTextLeft函数，参数为snippet.context
+          return {title:snippet.title, object:self, selector:'setTextLeft:', param:snippet.context}
+        case "right"://right调用setTextRight函数，参数为snippet.context
+          return {title:snippet.title, object:self, selector:'setTextRight:', param:snippet.context}
+        default:
+      }
+    })
+    menuController.rowHeight = 35;
+    menuController.preferredContentSize = {
+      width: 200,
+      height: menuController.rowHeight * menuController.commandTable.length
+    };
+    var studyController = Application.sharedInstance().studyController(self.view.window);
+    self.view.popoverController = new UIPopoverController(menuController);
+    var r = button.convertRectToView(button.bounds,studyController.view);
+    self.view.popoverController.presentPopoverFromRect(r, studyController.view, 1 << 1, true);
+  } catch (error) {
+    showHUD(error)
+  }
+  },
+  setTextLeft: function(text) {
+    self.textviewDelimeter.text = text
+  },
+  setTextRight: function(text) {
+    self.textviewPrefix.text = text
   },
   showOption: function(sender) {
     self.optionButton.backgroundColor = UIColor.colorWithHexString("#5982c4");
