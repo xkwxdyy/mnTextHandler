@@ -49,8 +49,8 @@ JSB.newAddon = function (mainPath) {
 
             self.addonController.transformButton.hidden = false
             self.addonController.pasteButton.hidden = false
-            self.addonController.view.frame = { x: 50, y: 100, width: 300, height: 400 }
-            self.addonController.currentFrame = { x: 50, y: 100, width: 300, height: 400 }
+            self.addonController.view.frame = { x: 100, y: 0, width: 500, height: 150 }
+            self.addonController.currentFrame = { x: 100, y: 0, width: 500, height: 150 }
           }
           NSTimer.scheduledTimerWithTimeInterval(0.2, false, function () {
             self.appInstance.studyController(self.window).becomeFirstResponder(); //For dismiss keyboard on iOS
