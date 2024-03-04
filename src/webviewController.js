@@ -459,37 +459,39 @@ var mnTextHandlerController = JSB.defineClass(
     
     // 获取 self.textviewDelimeter.text 的内容
     let delimiterContent = self.textviewDelimeter.text;
-
+  
+    // 定义将要替换的文本
+    let replacedContent;
+  
     // 检测 self.textviewDelimeter.text 的内容是否为特定的字符串
     let skipProcessing = delimiterContent === '(/【.*】/g, "")' || delimiterContent === '【.*】';
-
+  
     if (!skipProcessing) {
         // 匹配所有【xxx：yyy】形式的内容
-        let matches = clipboardContent.match(/【[^：]+：([^】]+)】/g);
-        if (matches) {
-            // 处理所有匹配的内容，并替换
-            for (let i = 0; i < matches.length; i++) {
-                clipboardContent = clipboardContent.replace(matches[i], matches[i].match(/【[^：]+：([^】]+)】/)[1]);
-            }
-            // 设置到替换框
-            self.textviewPrefix.text = clipboardContent;
-            return; // 提前结束函数
-        }
+        let extractedContent = clipboardContent.replace(/【[^：]+：([^】]+)】/g, function(match, p1) {
+            // p1就是匹配到的yyy部分
+            // 去掉“x级标题”
+            return p1.replace(/(一|二|三|四|五|六|七|八|九)级标题/g, '');
+        });
+        // 设置去掉【】及“x级标题”后的文本到替换框
+        self.textviewPrefix.text = extractedContent;
+        return; // 提前结束函数
     }
-
-    // 原来的处理逻辑
-    let regex = /(一|二|三|四|五|六|七|八|九)级标题/;
-    let match = clipboardContent.match(regex);
-    
-    if (match) {
-        // 如果匹配成功，去掉“x级标题”四个字
-        let replacedContent = clipboardContent.replace(/(一|二|三|四|五|六|七|八|九)级标题/g, '');
-        // 将处理后的内容输出到替换框
-        self.textviewPrefix.text = replacedContent;
+  
+    // 如果 self.textviewDelimeter.text 为指定字符串，或者没有匹配到【xxx：yyy】，则进行下面的操作
+    // 匹配“x级标题”正则表达式
+    let regex = /(一|二|三|四|五|六|七|八|九)级标题/g;
+  
+    // 如果有匹配，则删除所有的“x级标题”
+    if (clipboardContent.match(regex)) {
+        replacedContent = clipboardContent.replace(regex, '');
     } else {
-        // 如果剪切板内容中不包含指定的内容，直接输出到替换框
-        self.textviewPrefix.text = clipboardContent;
+        // 如果没有匹配到“x级标题”，原封不动地赋值
+        replacedContent = clipboardContent;
     }
+  
+    // 将处理结果设置到替换框
+    self.textviewPrefix.text = replacedContent;
   },
   transformReplacementToSearchButtonTapped: function() {
     // 将替换框的内容复制到查找框
