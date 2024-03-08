@@ -359,6 +359,7 @@ var mnTextHandlerController = JSB.defineClass(
       {title:'Keywords to MNtag', object:self, selector:'setOption:', param:4, checked:self.mode === 4},
       {title:'Find and replace', object:self, selector:'setOption:', param:5, checked:self.mode === 5},
       {title:'Regular expression', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
+      {title:"Change sub-items' title", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
     ];
     menuController.rowHeight = 35;
     menuController.preferredContentSize = {
@@ -419,6 +420,9 @@ var mnTextHandlerController = JSB.defineClass(
         self.replacement = self.textviewPrefix.text
         self.textviewOutput.text = input.regularExpression(self.search, self.replacement)
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
+        break;
+      case 7: // 修改子项标题
+        setTtile()
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -741,3 +745,38 @@ String.prototype.regularExpression = function (search, replacement) {
 
   return `(/${search}/g, "${replacement}")`;
 };
+
+
+function setTtile() {
+  let focusWindow = Application.sharedInstance().focusWindow
+  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+  //获取选中卡片
+  let focusNote = notebookController.focusNote
+  //拿到当前笔记本id，undoGrouping要用
+  let notebookId = notebookController.notebookId
+  //获取标题
+  let title = focusNote.noteTitle
+  //提取文本
+  let text = title.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "【$3：$2】")
+  //套一层undoGrouping，方便撤销
+  UndoManager.sharedInstance().undoGrouping(
+    String(Date.now()),
+    notebookId,
+    ()=>{
+      // 对子卡片操作
+      focusNote.childNotes.forEach(note=>{
+        // 获取旧标题
+        let oldTitle = note.noteTitle
+        // 如果旧标题以【xxx】为开头，则先将这段内容去掉
+        if (oldTitle.startsWith('【')) {
+          oldTitle = oldTitle.replace(/【.*】/g, '');
+        }
+        // 处理新标题
+        let newTitle = text + oldTitle
+        // 设置标题
+        note.noteTitle = newTitle
+      })
+    }
+  )
+  Application.sharedInstance().refreshAfterDBChanged(notebookId)
+}
