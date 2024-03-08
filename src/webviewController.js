@@ -422,7 +422,7 @@ var mnTextHandlerController = JSB.defineClass(
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         break;
       case 7: // 修改子项标题
-        setTtile()
+        setTitle()
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -747,36 +747,53 @@ String.prototype.regularExpression = function (search, replacement) {
 };
 
 
-function setTtile() {
+function setTitle() {
+  // 获取当前激活的窗口
   let focusWindow = Application.sharedInstance().focusWindow
+  // 获取笔记本控制器
   let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
-  //获取选中卡片
+  // 获取当前聚焦的笔记
   let focusNote = notebookController.focusNote
-  //拿到当前笔记本id，undoGrouping要用
+  // 获取当前笔记本id
   let notebookId = notebookController.notebookId
-  //获取标题
+  // 获取当前笔记标题，用于提取 `text`
   let title = focusNote.noteTitle
-  //提取文本
-  let text = title.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "【$3：$2】")
-  //套一层undoGrouping，方便撤销
+  // 正则表达式提取 `text`
+  let text = title.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
+
+  // 使用 UndoManager 的 undoGrouping 功能方便之后的撤销操作
   UndoManager.sharedInstance().undoGrouping(
     String(Date.now()),
     notebookId,
-    ()=>{
-      // 对子卡片操作
-      focusNote.childNotes.forEach(note=>{
-        // 获取旧标题
-        let oldTitle = note.noteTitle
-        // 如果旧标题以【xxx】为开头，则先将这段内容去掉
-        if (oldTitle.startsWith('【')) {
-          oldTitle = oldTitle.replace(/【.*】/g, '');
+    () => {
+      focusNote.childNotes.forEach(note => {
+        let oldTitle = note.noteTitle;
+        let newTitle;
+
+        if (text !== "") {
+          // 检查【xxx】格式，并捕获xxx内容
+          let matchResult = oldTitle.match(/^【([^】]*)/);
+
+          if (matchResult) { // 如果有匹配结果
+            let capturedText = matchResult[1];
+            
+            // 检查是否包含text并且是否需要补上】
+            if (capturedText.includes(text) && !oldTitle.includes("】")) {
+              note.noteTitle = oldTitle + "】";
+            } else if (!capturedText.includes(text)) {
+              // 如果不包含text，替换原有【】内容
+              newTitle = oldTitle.replace(/^【.*?】/, "【" + text + "】");
+              note.noteTitle = newTitle;
+            }
+          } else { // 如果标题不是以【xxx开头
+            newTitle = "【" + text + "】" + oldTitle;
+            note.noteTitle = newTitle;
+          }
         }
-        // 处理新标题
-        let newTitle = text + oldTitle
-        // 设置标题
-        note.noteTitle = newTitle
-      })
+      });
     }
-  )
+  );
+
+  // 更新数据库后刷新界面
   Application.sharedInstance().refreshAfterDBChanged(notebookId)
 }
