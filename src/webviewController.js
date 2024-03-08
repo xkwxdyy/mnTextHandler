@@ -152,6 +152,13 @@ var mnTextHandlerController = JSB.defineClass(
       self.transformReplacementToSearchButton.setTitleForState("⬅️",0)
       self.transformReplacementToSearchButton.titleLabel.font = UIFont.systemFontOfSize(18);
 
+      // 新建一个查找框内容到替换框内容的按钮的实例
+      self.transformSearchToReplacementButton = UIButton.buttonWithType(0);
+      self.setButtonLayout(self.transformSearchToReplacementButton,"transformSearchToReplacementButtonTapped:")
+      self.transformSearchToReplacementButton.layer.cornerRadius = 5
+      self.transformSearchToReplacementButton.setTitleForState("➡️",0)
+      self.transformSearchToReplacementButton.titleLabel.font = UIFont.systemFontOfSize(18);
+
 
       // 新建一个清空按钮的实例
       self.clearButton = UIButton.buttonWithType(0);
@@ -270,7 +277,9 @@ var mnTextHandlerController = JSB.defineClass(
     self.clearDelimeterButton.frame = {  x: self.textviewDelimeter.frame.x+self.textviewDelimeter.frame.width-50,  y: self.textviewDelimeter.frame.y+self.textviewDelimeter.frame.height-30,  width: 50,  height: 30};
     self.clearPrefixButton.frame = {  x: self.textviewPrefix.frame.x+self.textviewPrefix.frame.width-50,  y: self.textviewPrefix.frame.y+self.textviewPrefix.frame.height-30,  width: 50,  height: 30};
 
-    self.transformReplacementToSearchButton.frame = {  x: self.textviewPrefix.frame.x - 45 ,  y: self.textviewPrefix.frame.y+self.textviewPrefix.frame.height/2-40,  width: 45,  height: 80};
+    self.transformReplacementToSearchButton.frame = {  x: self.textviewPrefix.frame.x - 45 ,  y: self.textviewPrefix.frame.y,  width: 45,  height: 40};
+
+    self.transformSearchToReplacementButton.frame = {  x: self.textviewPrefix.frame.x - 45,  y: self.textviewPrefix.frame.y+40,  width: 45,  height: 40};
 
     self.transformButton.frame = {  x: xLeft+5,  y: yBottom-35,  width: viewFrame.width,  height: 30};
     viewFrame.x = 10+halfWidth
@@ -492,6 +501,10 @@ var mnTextHandlerController = JSB.defineClass(
   
     // 将处理结果设置到替换框
     self.textviewPrefix.text = replacedContent;
+  },
+  transformSearchToReplacementButtonTapped: function() {
+    // 将查找框的内容复制到替换框
+    self.textviewPrefix.text = self.textviewDelimeter.text;
   },
   transformReplacementToSearchButtonTapped: function() {
     // 将替换框的内容复制到查找框
