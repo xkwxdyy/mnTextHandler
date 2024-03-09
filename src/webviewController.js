@@ -426,12 +426,13 @@ var mnTextHandlerController = JSB.defineClass(
       case 7: // 修改子项标题
         setTitle()
         break;
-      case 8: // 批量删除评论和增加评论
+      case 8: 
+      // 批量删除评论和增加评论，找到需要删除的评论才能增加评论
+      // 而且不能删除文本摘录
         let focusNotes = getFocusNotes()
-        // self.index = self.textviewDelimeter.text
-        // self.comment = self.textviewPrefix.text
-        let commentToRemove = "xxx"
-        let commentToAppend = "123"
+        // self.index = 
+        let commentToRemove = self.textviewDelimeter.text
+        let commentToAppend = self.textviewPrefix.text
         focusNotes.forEach(focusNote => {
           // copyJSON(focusNote)
           let index = getCommentIndex(focusNote, commentToRemove)
@@ -843,7 +844,9 @@ function deleteAndAddComment(note,index, comment) {
     notebookId,
     () => {
       note.removeCommentByIndex(index)
-      note.appendTextComment(comment)
+      if (comment !== "") {
+        note.appendTextComment(comment)
+      }
     }
   );
 
