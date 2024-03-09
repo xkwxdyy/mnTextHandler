@@ -1,3 +1,4 @@
+JSB.require("utils")
 var mnTextHandlerController = JSB.defineClass(
   'mnTextHandlerController : UIViewController', {
     viewDidLoad: function() {
@@ -360,6 +361,7 @@ var mnTextHandlerController = JSB.defineClass(
       {title:'Find and replace', object:self, selector:'setOption:', param:5, checked:self.mode === 5},
       {title:'Regular expression', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
       {title:"Change sub-items' title", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
+      {title:"Delete and add comments", object:self, selector:'setOption:', param:8, checked:self.mode === 8}
     ];
     menuController.rowHeight = 35;
     menuController.preferredContentSize = {
@@ -423,6 +425,21 @@ var mnTextHandlerController = JSB.defineClass(
         break;
       case 7: // 修改子项标题
         setTitle()
+        break;
+      case 8: // 批量删除评论和增加评论
+        let focusNotes = getFocusNotes()
+        // self.index = self.textviewDelimeter.text
+        // self.comment = self.textviewPrefix.text
+        let commentToRemove = "xxx"
+        let commentToAppend = "123"
+        focusNotes.forEach(focusNote => {
+          // copyJSON(focusNote)
+          let index = getCommentIndex(focusNote, commentToRemove)
+          if (index == -1) {
+            return
+          }
+          deleteAndAddComment(focusNote,index, commentToAppend)
+        })
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -791,6 +808,42 @@ function setTitle() {
           }
         }
       });
+    }
+  );
+
+  // 更新数据库后刷新界面
+  Application.sharedInstance().refreshAfterDBChanged(notebookId)
+}
+
+/**
+ * 
+ * @param {MbBookNote} note 
+ * @param {String} comment 
+ */
+function getCommentIndex(note,commentToSearch) {
+  let comments = note.comments
+
+  let index = comments.findIndex(comment=>{
+    return (comment.type === "TextNote" && comment.text === commentToSearch)
+  })
+  return index
+}
+/**
+ * 
+ * @param {MbBookNote} note 
+ * @param {Number} index 
+ * @param {String} comment 
+ */
+function deleteAndAddComment(note,index, comment) {
+  // 获取当前激活的窗口
+  let notebookId = note.notebookId
+  // 使用 UndoManager 的 undoGrouping 功能方便之后的撤销操作
+  UndoManager.sharedInstance().undoGrouping(
+    String(Date.now()),
+    notebookId,
+    () => {
+      note.removeCommentByIndex(index)
+      note.appendTextComment(comment)
     }
   );
 

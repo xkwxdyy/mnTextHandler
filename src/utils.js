@@ -9,3 +9,17 @@ function copy(text) {
 function copyJSON(object) {
   UIPasteboard.generalPasteboard().string = JSON.stringify(object,null,2)
 }
+function studyController() {
+  let focusWindow = Application.sharedInstance().focusWindow
+  return Application.sharedInstance().studyController(focusWindow)
+}
+
+function getFocusNotes() {
+  let focusWindow = Application.sharedInstance().focusWindow
+  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+  let selViewLst = notebookController.mindmapView.selViewLst
+  // let focusNotes = 
+  return selViewLst.map(tem=>{
+    return tem.note.note
+  })
+}
