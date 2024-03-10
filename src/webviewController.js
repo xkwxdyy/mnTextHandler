@@ -371,11 +371,25 @@ var mnTextHandlerController = JSB.defineClass(
     var studyController = Application.sharedInstance().studyController(self.view.window);
     self.view.popoverController = new UIPopoverController(menuController);
     var r = sender.convertRectToView(sender.bounds,studyController.view);
-    self.view.popoverController.presentPopoverFromRect(r, studyController.view, 1 << 1, true);
+    self.view.popoverController.presentPopoverFromRect(r, studyController.view, 1 << 0, true);
   },
   setOption: function (params) {
     if (self.view.popoverController) {self.view.popoverController.dismissPopoverAnimated(true);}
     self.mode = params
+    
+    let optionNames = [
+      "Title case convert",
+      "Split item",
+      "Convert to lower case",
+      "Keywords to MNtag",
+      "Find and replace",
+      "Regular expression",
+      "Change sub-items' title",
+      "Delete and add comments"
+    ]
+    self.optionButton.setTitleForState(optionNames[params-1],0)
+
+    // 把配置写到系统里
     NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delimiter:self.delimiter,prefix:self.prefix},"mnTextHandler")
   },
   transform: function() {
