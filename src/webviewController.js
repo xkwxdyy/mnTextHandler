@@ -792,13 +792,13 @@ function setTitle() {
   let title = focusNote.noteTitle
   // 正则表达式提取 `text`
   let text = title.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
-
+  let descendants = getAllDescendants(focusNote)
   // 使用 UndoManager 的 undoGrouping 功能方便之后的撤销操作
   UndoManager.sharedInstance().undoGrouping(
     String(Date.now()),
     notebookId,
     () => {
-      focusNote.childNotes.forEach(note => {
+      descendants.forEach(note => {
         let oldTitle = note.noteTitle;
         let newTitle;
 
@@ -822,7 +822,8 @@ function setTitle() {
             note.noteTitle = newTitle;
           }
         }
-      });
+        }
+      );
     }
   );
 
@@ -866,4 +867,32 @@ function deleteAndAddComment(note,index, comment) {
 
   // 更新数据库后刷新界面
   Application.sharedInstance().refreshAfterDBChanged(notebookId)
+}
+
+
+/**
+ * 
+ * @param {MbBookNote} note 
+ * @returns {MbBookNote[]}
+ */
+function getAllDescendants(note) {
+  let descendants = [];
+  /**
+   * 
+   * @param {MbBookNote} currentnote 
+   * @returns 
+   */
+  function traverse(currentnote) {
+    if (!currentnote.childNotes) {
+      return;
+    }
+    currentnote.childNotes.forEach(child => {
+      descendants.push(child);
+      traverse(child);
+    });
+  }
+
+  traverse(note);
+
+  return descendants;
 }
