@@ -354,14 +354,14 @@ var mnTextHandlerController = JSB.defineClass(
     // 菜单控制
     var menuController = MenuController.new();
     menuController.commandTable = [
+      {title:'Regular expression', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
+      {title:"Change sub-items' title", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
+      {title:"Delete and add comments", object:self, selector:'setOption:', param:8, checked:self.mode === 8},
       {title:'Title case convert', object:self, selector:'setOption:', param:1, checked:self.mode === 1},
       {title:'Split item', object:self, selector:'setOption:', param:2, checked:self.mode === 2},
       {title:'Convert to lower case', object:self, selector:'setOption:', param:3, checked:self.mode === 3},
       {title:'Keywords to MNtag', object:self, selector:'setOption:', param:4, checked:self.mode === 4},
-      {title:'Find and replace', object:self, selector:'setOption:', param:5, checked:self.mode === 5},
-      {title:'Regular expression', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
-      {title:"Change sub-items' title", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
-      {title:"Delete and add comments", object:self, selector:'setOption:', param:8, checked:self.mode === 8}
+      {title:'Find and replace', object:self, selector:'setOption:', param:5, checked:self.mode === 5}
     ];
     menuController.rowHeight = 35;
     menuController.preferredContentSize = {
