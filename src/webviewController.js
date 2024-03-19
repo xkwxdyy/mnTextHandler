@@ -1019,25 +1019,26 @@ function newBrotherNoteAndMerge() {
   let focusWindow = Application.sharedInstance().focusWindow
   // 获取笔记本控制器
   let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
-  // 获取当前聚焦的笔记
-  let note = notebookController.focusNote
   // 获取当前笔记本id
   let notebookId = notebookController.notebookId
-  // 先获取旧卡片的 ID
-  let oldNoteId = note.noteId
-  // 获取旧卡片的标题
-  let oldtitle = note.noteTitle
-  // 获取旧卡片的颜色
-  let oldNoteColorIndex = note.colorIndex
-  // 获取旧卡片的父卡片
-  let parent = note.parentNote
-  // 创建新兄弟卡片，标题为旧卡片的标题
-  newNote = creatNote(oldtitle, "", oldNoteColorIndex)
-  parent.addChild(newNote)
-  // 清除旧卡片的标题
-  note.noteTitle = ""
-  // 将旧卡片合并到新卡片中
-  newNote.merge(note)
+  let focusNotes = getFocusNotes()
+  focusNotes.forEach(
+    note=>{
+      // 获取旧卡片的标题
+      let oldtitle = note.noteTitle
+      // 获取旧卡片的颜色
+      let oldNoteColorIndex = note.colorIndex
+      // 获取旧卡片的父卡片
+      let parent = note.parentNote
+      // 创建新兄弟卡片，标题为旧卡片的标题
+      newNote = creatNote(oldtitle, "", oldNoteColorIndex)
+      parent.addChild(newNote)
+      // 清除旧卡片的标题
+      note.noteTitle = ""
+      // 将旧卡片合并到新卡片中
+      newNote.merge(note)
+    }
+  )
   Application.sharedInstance().refreshAfterDBChanged(notebookId)
 }
 
