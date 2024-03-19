@@ -354,6 +354,7 @@ var mnTextHandlerController = JSB.defineClass(
     // 菜单控制
     var menuController = MenuController.new();
     menuController.commandTable = [
+      {title:'处理旧卡片', object:self, selector:'setOption:', param:9, checked:self.mode === 9},
       {title:'Regular expression', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
       {title:"Change sub-items' title", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
       {title:"Delete and add comments", object:self, selector:'setOption:', param:8, checked:self.mode === 8},
@@ -385,7 +386,8 @@ var mnTextHandlerController = JSB.defineClass(
       "Find and replace",
       "Regular expression",
       "Change sub-items' title",
-      "Delete and add comments"
+      "Delete and add comments",
+      "处理旧卡片"
     ]
     self.optionButton.setTitleForState(optionNames[params-1],0)
 
@@ -393,6 +395,8 @@ var mnTextHandlerController = JSB.defineClass(
     NSUserDefaults.standardUserDefaults().setObjectForKey({mode:self.mode,delimiter:self.delimiter,prefix:self.prefix},"mnTextHandler")
   },
   transform: function() {
+  try {//捕获异常信息
+    
     let input = self.textviewInput.text
     switch (self.mode) {
       case 1:  // 转英文标题规范格式
@@ -453,8 +457,20 @@ var mnTextHandlerController = JSB.defineClass(
           if (index == -1) {
             return
           }
-          deleteAndAddComment(focusNote,index, commentToAppend)
+          deleteAndAddComment(focusNote, index, commentToAppend)
         })
+        break;
+      case 9:
+        // 获取当前激活的窗口
+        let focusWindow = Application.sharedInstance().focusWindow
+        // 获取笔记本控制器
+        let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+        // 获取当前聚焦的笔记
+        let focusNote = notebookController.focusNote
+        // 获取当前笔记本id
+        let notebookId = notebookController.notebookId
+        UIPasteboard.generalPasteboard().string = focusNote.noteTitle
+        removeTextAndHtmlComments(focusNote, notebookId)
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -467,6 +483,9 @@ var mnTextHandlerController = JSB.defineClass(
     // self.pasteButton.layer.opacity = 0.5
     self.optionButton.backgroundColor = UIColor.whiteColor().colorWithAlphaComponent(0)
     self.optionButton.layer.opacity = 0.5
+  } catch (error) {
+    showHUD(error)
+  }
   },
   pasteButtonTapped: function() {
     // 将剪切板的内容输出到 input 框
@@ -840,7 +859,7 @@ function getCommentIndex(note,commentToSearch) {
   let comments = note.comments
 
   let index = comments.findIndex(comment=>{
-    return (comment.type === "TextNote" && comment.text === commentToSearch)
+    return ((comment.type === "TextNote" || comment.type === "HtmlNote")&& comment.text === commentToSearch)
   })
   return index
 }
@@ -850,7 +869,7 @@ function getCommentIndex(note,commentToSearch) {
  * @param {Number} index 
  * @param {String} comment 
  */
-function deleteAndAddComment(note,index, comment) {
+function deleteAndAddComment(note, index, comment) {
   // 获取当前激活的窗口
   let notebookId = note.notebookId
   // 使用 UndoManager 的 undoGrouping 功能方便之后的撤销操作
@@ -895,4 +914,81 @@ function getAllDescendants(note) {
   traverse(note);
 
   return descendants;
+}
+
+
+// function removeTextAndHtmlComments() {
+//   let focusNotes = getFocusNotes()
+//   let notebookId = focusNotes[0].notebookId
+//   focusNotes.forEach(note=>{
+//     let textNoteIndex = []
+//     note.comments.map((comment,index)=>{
+//       if(comment.type === "TextNote" || comment.type === "HtmlNote"){
+//         textNoteIndex.unshift(index)
+//       }
+//     })
+//     UndoManager.sharedInstance().undoGrouping(
+//       String(Date.now()),
+//       notebookId,
+//       ()=>{
+//         UIPasteboard.generalPasteboard().string = note.noteTitle
+//         note.noteTitle = ""
+//         textNoteIndex.forEach(index=>{
+//           note.removeCommentByIndex(index)
+//         })
+//       }
+//     )
+//   })
+//   Application.sharedInstance().refreshAfterDBChanged(notebookId)
+// }
+function removeTextAndHtmlComments(note, notebookId) {
+  let textNoteIndex = []
+  note.comments.map((comment,index)=>{
+    if(comment.type === "TextNote" || comment.type === "HtmlNote"){
+      textNoteIndex.unshift(index)
+    }
+  })
+  UndoManager.sharedInstance().undoGrouping(
+    String(Date.now()),
+    notebookId,
+    ()=>{
+      note.noteTitle = ""
+      textNoteIndex.forEach(index=>{
+        note.removeCommentByIndex(index)
+      })
+    }
+  )
+  Application.sharedInstance().refreshAfterDBChanged(notebookId)
+}
+
+
+/**
+ * 
+ * @param {MbBookNote|MbBookNote[]} note 
+ * @param {Number} colorIndex
+ * @returns {MbBookNote[]}
+ */
+function getAllLastDescendants(note, colorIndex = undefined) {
+  let descendants = []
+  if (Array.isArray(note)) {
+    // showHUD("is array")
+    note.forEach(n=>{
+      let test = getAllDescendants(n)
+      descendants = descendants.concat(test)
+    })
+    // showHUD("message"+descendants.length)
+  }else{
+    descendants = getAllDescendants(note)
+  }
+  let lastDescendants = descendants.filter(note=>{
+    if (note.childNotes && note.childNotes.length) {
+      return false
+    }
+    if (colorIndex !== undefined) {
+      return note.colorIndex === colorIndex
+    }
+    return true
+  })
+  // showHUD("d:"+lastDescendants.length+":"+descendants.length)
+  return lastDescendants;
 }
