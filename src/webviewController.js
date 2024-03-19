@@ -354,6 +354,7 @@ var mnTextHandlerController = JSB.defineClass(
     // 菜单控制
     var menuController = MenuController.new();
     menuController.commandTable = [
+      {title:'卡片→非摘录版本', object:self, selector:'setOption:', param:10, checked:self.mode === 10},
       {title:'处理旧卡片', object:self, selector:'setOption:', param:9, checked:self.mode === 9},
       {title:'Regular expression', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
       {title:"Change sub-items' title", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
@@ -387,7 +388,8 @@ var mnTextHandlerController = JSB.defineClass(
       "Regular expression",
       "Change sub-items' title",
       "Delete and add comments",
-      "处理旧卡片"
+      "处理旧卡片",
+      "卡片→非摘录版本"
     ]
     self.optionButton.setTitleForState(optionNames[params-1],0)
 
@@ -471,6 +473,9 @@ var mnTextHandlerController = JSB.defineClass(
         let notebookId = notebookController.notebookId
         UIPasteboard.generalPasteboard().string = focusNote.noteTitle
         removeTextAndHtmlComments(focusNote, notebookId)
+        break;
+      case 10:
+        newBrotherNoteAndMerge()
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -991,4 +996,65 @@ function getAllLastDescendants(note, colorIndex = undefined) {
   })
   // showHUD("d:"+lastDescendants.length+":"+descendants.length)
   return lastDescendants;
+}
+
+
+
+// 需求：https://github.com/xkwxdyy/mnTextHandler/discussions/3
+/**
+ * 1. 复制卡片标题到剪切板
+ * 2. 去掉卡片标题
+ * 3. 生成卡片的兄弟卡片，标题为复制的内容
+ * 4. 将旧卡片合并到新的兄弟卡片中
+ */
+
+/**
+ * 
+ * @param {MbBookNote} parent 
+ * @param {String} title 
+ * @param {Number} colorIndex
+ */
+function newBrotherNoteAndMerge() {
+  // 获取当前激活的窗口
+  let focusWindow = Application.sharedInstance().focusWindow
+  // 获取笔记本控制器
+  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+  // 获取当前聚焦的笔记
+  let note = notebookController.focusNote
+  // 获取当前笔记本id
+  let notebookId = notebookController.notebookId
+  // 先获取旧卡片的 ID
+  let oldNoteId = note.noteId
+  // 获取旧卡片的标题
+  let oldtitle = note.noteTitle
+  // 获取旧卡片的颜色
+  let oldNoteColorIndex = note.colorIndex
+  // 获取旧卡片的父卡片
+  let parent = note.parentNote
+  // 创建新兄弟卡片，标题为旧卡片的标题
+  newNote = creatNote(oldtitle, "", oldNoteColorIndex)
+  parent.addChild(newNote)
+  // 清除旧卡片的标题
+  note.noteTitle = ""
+  // 将旧卡片合并到新卡片中
+  newNote.merge(note)
+  Application.sharedInstance().refreshAfterDBChanged(notebookId)
+}
+
+function creatNote(title, content, color) {
+  try {
+    let notebook = currentNotebook()
+    let note = Note.createWithTitleNotebookDocument(title, notebook,currentDocController().document)
+    // if (content) {
+      // try {
+      //   note.appendMarkdownComment(content)
+      // } catch (error) {
+        note.appendTextComment(content)
+      // }
+    // }
+    note.colorIndex = color
+    return note
+    } catch (error) {
+    showHUD(error)
+  }
 }
