@@ -359,6 +359,7 @@ var mnTextHandlerController = JSB.defineClass(
       {title:"修改子卡片前缀", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
       {title:'处理旧卡片：只清除', object:self, selector:'setOption:', param:9, checked:self.mode === 9},
       {title:'处理旧卡片：清除+合并标题', object:self, selector:'setOption:', param:11, checked:self.mode === 11},
+      {title:'批量删除“模板：”', object:self, selector:'setOption:', param:12, checked:self.mode === 12},
       {title:"Delete and add comments", object:self, selector:'setOption:', param:8, checked:self.mode === 8},
       {title:'Title case convert', object:self, selector:'setOption:', param:1, checked:self.mode === 1},
       {title:'Split item', object:self, selector:'setOption:', param:2, checked:self.mode === 2},
@@ -391,7 +392,8 @@ var mnTextHandlerController = JSB.defineClass(
       "Delete and add comments",
       "处理旧卡片：只清除",
       "卡片→非摘录版本",
-      "处理旧卡片：清除+合并标题"
+      "处理旧卡片：清除+合并标题",
+      "批量删除“模板：”"
     ]
     self.optionButton.setTitleForState(optionNames[params-1],0)
 
@@ -481,6 +483,9 @@ var mnTextHandlerController = JSB.defineClass(
         break;
       case 11: // 处理旧卡片：清除+合并标题
         removeTextAndHtmlCommentsAndMerge()
+        break;
+      case 12: // 批量删除“模板：”
+        deleteSpecialCommentOfLastLightYellowNote("模版：")
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -1116,4 +1121,53 @@ function creatNote(title, content, color) {
     } catch (error) {
     showHUD(error)
   }
+}
+
+
+// 批量删除最后层级的黄色卡片中的“模版：”
+/**
+ * @param {Number} colorIndex
+ */
+function deleteSpecialCommentOfLastLightYellowNote(comment = "模版：") {
+  // 获取当前激活的窗口
+  let focusWindow = Application.sharedInstance().focusWindow
+  // 获取笔记本控制器
+  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+  // 获取当前聚焦的笔记
+  let focusNotes = getFocusNotes()
+  // 获取当前笔记本id
+  let notebookId = notebookController.notebookId
+
+  for (note of focusNotes) {
+    // 如果 note 没有子卡片
+    if (!note.childNotes || note.childNotes.length === 0) {
+      // 检测 note 是不是浅黄色卡片
+      if (note.colorIndex === 0) {
+        let index = getCommentIndex(note, comment)
+        if (index !== -1) {
+          note.removeCommentByIndex(index)
+        }
+        continue
+      }
+    } else {
+      // 如果 note 有子卡片
+      let ifExistChildNoteIsLightYellow = false
+      for (childNote of note.childNotes) {
+        if (childNote.colorIndex === 0) {
+          // 如果存在子卡片是浅黄色，则不处理 note
+          ifExistChildNoteIsLightYellow = true
+        }
+      }
+      if (ifExistChildNoteIsLightYellow) {
+        continue
+      } else {
+        let index = getCommentIndex(note, comment)
+        if (index !== -1) {
+          note.removeCommentByIndex(index)
+        }
+      }
+    }
+  }
+  // 更新数据库后刷新界面
+  Application.sharedInstance().refreshAfterDBChanged(notebookId)
 }
