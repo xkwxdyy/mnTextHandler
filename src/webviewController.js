@@ -355,9 +355,10 @@ var mnTextHandlerController = JSB.defineClass(
     var menuController = MenuController.new();
     menuController.commandTable = [
       {title:'卡片→非摘录版本', object:self, selector:'setOption:', param:10, checked:self.mode === 10},
-      {title:'处理旧卡片', object:self, selector:'setOption:', param:9, checked:self.mode === 9},
-      {title:'Regular expression', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
-      {title:"Change sub-items' title", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
+      {title:'生成正则表达式', object:self, selector:'setOption:', param:6, checked:self.mode === 6},
+      {title:"修改子卡片前缀", object:self, selector:'setOption:', param:7, checked:self.mode === 7},
+      {title:'处理旧卡片：只清除', object:self, selector:'setOption:', param:9, checked:self.mode === 9},
+      {title:'处理旧卡片：清除+合并标题', object:self, selector:'setOption:', param:11, checked:self.mode === 11},
       {title:"Delete and add comments", object:self, selector:'setOption:', param:8, checked:self.mode === 8},
       {title:'Title case convert', object:self, selector:'setOption:', param:1, checked:self.mode === 1},
       {title:'Split item', object:self, selector:'setOption:', param:2, checked:self.mode === 2},
@@ -385,11 +386,12 @@ var mnTextHandlerController = JSB.defineClass(
       "Convert to lower case",
       "Keywords to MNtag",
       "Find and replace",
-      "Regular expression",
-      "Change sub-items' title",
+      "生成正则表达式",
+      "修改子卡片前缀",
       "Delete and add comments",
-      "处理旧卡片",
-      "卡片→非摘录版本"
+      "处理旧卡片：只清除",
+      "卡片→非摘录版本",
+      "处理旧卡片：清除+合并标题"
     ]
     self.optionButton.setTitleForState(optionNames[params-1],0)
 
@@ -446,7 +448,7 @@ var mnTextHandlerController = JSB.defineClass(
       case 7: // 修改子项标题
         setTitle()
         break;
-      case 8: 
+      case 8:
       // 批量删除评论和增加评论，找到需要删除的评论才能增加评论
       // 而且不能删除文本摘录
         let focusNotes = getFocusNotes()
@@ -462,7 +464,7 @@ var mnTextHandlerController = JSB.defineClass(
           deleteAndAddComment(focusNote, index, commentToAppend)
         })
         break;
-      case 9:
+      case 9: // 处理旧卡片：只清除不合并标题
         // 获取当前激活的窗口
         let focusWindow = Application.sharedInstance().focusWindow
         // 获取笔记本控制器
@@ -476,6 +478,9 @@ var mnTextHandlerController = JSB.defineClass(
         break;
       case 10:
         newBrotherNoteAndMerge()
+        break;
+      case 11: // 处理旧卡片：清除+合并标题
+        removeTextAndHtmlCommentsAndMerge()
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -802,7 +807,9 @@ String.prototype.regularExpression = function (search, replacement) {
   return `(/${search}/g, "${replacement}")`;
 };
 
-
+/**
+ * @param {Number} colorIndex
+ */
 function setTitle() {
   // 获取当前激活的窗口
   let focusWindow = Application.sharedInstance().focusWindow
@@ -838,11 +845,19 @@ function setTitle() {
               note.noteTitle = oldTitle + "】";
             } else if (!capturedText.includes(text)) {
               // 如果不包含text，替换原有【】内容
-              newTitle = oldTitle.replace(/^【.*?】/, "【" + text + "】");
+              if (note.colorIndex == 2) {
+                newTitle = oldTitle.replace(/^【.*?】/, "【" + text + "】; ");
+              } else {
+                newTitle = oldTitle.replace(/^【.*?】/, "【" + text + "】");
+              }
               note.noteTitle = newTitle;
             }
           } else { // 如果标题不是以【xxx开头
-            newTitle = "【" + text + "】" + oldTitle;
+            if (note.colorIndex == 2) {
+              newTitle = "【" + text + "】; " + oldTitle;
+            } else {
+              newTitle = "【" + text + "】" + oldTitle;
+            }
             note.noteTitle = newTitle;
           }
         }
@@ -966,6 +981,49 @@ function removeTextAndHtmlComments(note, notebookId) {
   Application.sharedInstance().refreshAfterDBChanged(notebookId)
 }
 
+/**
+ * 
+ * @param {MbBookNote} parent 
+ * @param {String} title 
+ * @param {Number} colorIndex
+ */
+function removeTextAndHtmlCommentsAndMerge() {
+  // 获取当前激活的窗口
+  let focusWindow = Application.sharedInstance().focusWindow
+  // 获取笔记本控制器
+  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+  // 获取当前笔记本id
+  let notebookId = notebookController.notebookId
+  let focusNotes = getFocusNotes()
+  focusNotes.forEach(
+    note=>{
+      let textNoteIndex = []
+      note.comments.map((comment,index)=>{
+        if(comment.type === "TextNote" || comment.type === "HtmlNote"){
+          textNoteIndex.unshift(index)
+        }
+      })
+      // 获取旧卡片的标题
+      let oldtitle = note.noteTitle
+      // 获取旧卡片的颜色
+      let oldNoteColorIndex = note.colorIndex
+      // 获取旧卡片的父卡片
+      let parent = note.parentNote
+      // 创建新兄弟卡片，标题为旧卡片的标题
+      newNote = creatNote(oldtitle, "", oldNoteColorIndex)
+      parent.addChild(newNote)
+      // 清除旧卡片的标题
+      note.noteTitle = ""
+      // 清除评论中非摘录部分
+      textNoteIndex.forEach(index=>{
+        note.removeCommentByIndex(index)
+      })
+      // 将旧卡片合并到新卡片中
+      newNote.merge(note)
+    }
+  )
+  Application.sharedInstance().refreshAfterDBChanged(notebookId)
+}
 
 /**
  * 
