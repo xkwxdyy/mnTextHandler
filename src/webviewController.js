@@ -448,7 +448,15 @@ var mnTextHandlerController = JSB.defineClass(
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
         break;
       case 7: // 修改子项标题
-        setTitle()
+        // 获取当前激活的窗口
+        let focusWindow = Application.sharedInstance().focusWindow
+        // 获取笔记本控制器
+        let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+        // 获取当前聚焦的笔记
+        let focusNote = notebookController.focusNote
+        // 获取当前笔记本id
+        let notebookId = notebookController.notebookId
+        setTitle(focusNote, notebookId)
         break;
       case 8:
       // 批量删除评论和增加评论，找到需要删除的评论才能增加评论
@@ -468,13 +476,13 @@ var mnTextHandlerController = JSB.defineClass(
         break;
       case 9: // 处理旧卡片：只清除不合并标题
         // 获取当前激活的窗口
-        let focusWindow = Application.sharedInstance().focusWindow
+        focusWindow = Application.sharedInstance().focusWindow
         // 获取笔记本控制器
-        let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+        notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
         // 获取当前聚焦的笔记
-        let focusNote = notebookController.focusNote
+        focusNote = notebookController.focusNote
         // 获取当前笔记本id
-        let notebookId = notebookController.notebookId
+        notebookId = notebookController.notebookId
         UIPasteboard.generalPasteboard().string = focusNote.noteTitle
         removeTextAndHtmlComments(focusNote, notebookId)
         break;
@@ -812,68 +820,86 @@ String.prototype.regularExpression = function (search, replacement) {
   return `(/${search}/g, "${replacement}")`;
 };
 
+
+
 /**
  * @param {Number} colorIndex
  */
-function setTitle() {
-  // 获取当前激活的窗口
-  let focusWindow = Application.sharedInstance().focusWindow
-  // 获取笔记本控制器
-  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
-  // 获取当前聚焦的笔记
-  let focusNote = notebookController.focusNote
-  // 获取当前笔记本id
-  let notebookId = notebookController.notebookId
+function setTitle(parentNote, notebookId) {
   // 获取当前笔记标题，用于提取 `text`
-  let title = focusNote.noteTitle
+  let title = parentNote.noteTitle
   // 正则表达式提取 `text`
   let text = title.replace(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
-  let descendants = getAllDescendants(focusNote)
+  let textMatchResult = title.match(/“(.+)”：“(.+)”\s*相关(.+)/g, "$3：$2")
+  let descendants = getAllDescendants(parentNote)
   // 使用 UndoManager 的 undoGrouping 功能方便之后的撤销操作
   UndoManager.sharedInstance().undoGrouping(
     String(Date.now()),
     notebookId,
     () => {
-      descendants.forEach(note => {
-        let oldTitle = note.noteTitle;
-        let newTitle;
-
-        if (text !== "") {
-          // 检查【xxx】格式，并捕获xxx内容
-          let matchResult = oldTitle.match(/^【([^】]*)/);
-
-          if (matchResult) { // 如果有匹配结果
-            let capturedText = matchResult[1];
-            
-            // 检查是否包含text并且是否需要补上】
-            if (capturedText.includes(text) && !oldTitle.includes("】")) {
-              note.noteTitle = oldTitle + "】";
-            } else if (!capturedText.includes(text)) {
-              // 如果不包含text，替换原有【】内容
-              if (note.colorIndex == 2) {
-                newTitle = oldTitle.replace(/^【.*?】/, "【" + text + "】; ");
-              } else {
-                newTitle = oldTitle.replace(/^【.*?】/, "【" + text + "】");
-              }
-              note.noteTitle = newTitle;
-            }
-          } else { // 如果标题不是以【xxx开头
-            if (note.colorIndex == 2) {
-              newTitle = "【" + text + "】; " + oldTitle;
-            } else {
-              newTitle = "【" + text + "】" + oldTitle;
-            }
-            note.noteTitle = newTitle;
+      // 先处理非黄色卡片
+      // DONE: 避免处理同级黄色卡片下的子卡片
+      //   想法是对同级黄色卡片再处理一遍子卡片的标题
+      //   问题应该出在顺序上，最后处理的子卡片的标题会覆盖之前处理的子卡片的标题
+      for (descendant of descendants) {
+        if (descendant.noteTitle) {
+          if (descendant.colorIndex !== 0 && descendant.colorIndex !== 4) {
+            // 有标题且不是黄色卡片才处理
+            setTitleAux(descendant, text, textMatchResult)
+          } 
+        }
+      }
+      for (descendant of descendants) {
+        if (descendant.noteTitle) {
+          if (descendant.colorIndex == 0 || descendant.colorIndex == 4) {
+            // setTitle(descendant, notebookId)
+            descendant.childNotes.forEach(child=>{
+              setTitle(child, notebookId)
+            })
           }
         }
-        }
-      );
+      }
     }
   );
 
   // 更新数据库后刷新界面
   Application.sharedInstance().refreshAfterDBChanged(notebookId)
 }
+
+function setTitleAux(note, text, textMatchResult) {
+  let oldTitle = note.noteTitle;
+  let newTitle;
+
+  if (textMatchResult) {
+    // 检查【xxx】格式，并捕获xxx内容
+    let matchResult = oldTitle.match(/^【([^】]*)/);
+
+    if (matchResult) { // 如果有匹配结果
+      let capturedText = matchResult[1];
+      
+      // 检查是否包含text并且是否需要补上】
+      if (capturedText.includes(text) && !oldTitle.includes("】")) {
+        note.noteTitle = oldTitle + "】";
+      } else if (!capturedText.includes(text)) {
+        // 如果不包含text，替换原有【】内容
+        if (note.colorIndex == 2) {
+          newTitle = oldTitle.replace(/^【.*?】/, "【" + text + "】; ");
+        } else {
+          newTitle = oldTitle.replace(/^【.*?】/, "【" + text + "】");
+        }
+        note.noteTitle = newTitle;
+      }
+    } else { // 如果标题不是以【xxx开头
+      if (note.colorIndex == 2) {
+        newTitle = "【" + text + "】; " + oldTitle;
+      } else {
+        newTitle = "【" + text + "】" + oldTitle;
+      }
+      note.noteTitle = newTitle;
+    }
+  }
+}
+
 
 /**
  * 
