@@ -361,6 +361,7 @@ var mnTextHandlerController = JSB.defineClass(
       {title:'处理旧卡片：清除+合并标题', object:self, selector:'setOption:', param:11, checked:self.mode === 11},
       {title:'批量删除“模板：”', object:self, selector:'setOption:', param:12, checked:self.mode === 12},
       {title:"批量删除和添加指定评论", object:self, selector:'setOption:', param:8, checked:self.mode === 8},
+      {title:'克隆卡片为自身的子卡片', object:self, selector:'setOption:', param:13, checked:self.mode === 13},
       {title:'Title case convert', object:self, selector:'setOption:', param:1, checked:self.mode === 1},
       {title:'Split item', object:self, selector:'setOption:', param:2, checked:self.mode === 2},
       {title:'Convert to lower case', object:self, selector:'setOption:', param:3, checked:self.mode === 3},
@@ -393,7 +394,8 @@ var mnTextHandlerController = JSB.defineClass(
       "处理旧卡片：只清除",
       "卡片→非摘录版本",
       "处理旧卡片：清除+合并标题",
-      "批量删除“模板：”"
+      "批量删除“模板：”",
+      "克隆卡片为自身的子卡片"
     ]
     self.optionButton.setTitleForState(optionNames[params-1],0)
 
@@ -475,16 +477,7 @@ var mnTextHandlerController = JSB.defineClass(
         })
         break;
       case 9: // 处理旧卡片：只清除不合并标题
-        // 获取当前激活的窗口
-        focusWindow = Application.sharedInstance().focusWindow
-        // 获取笔记本控制器
-        notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
-        // 获取当前聚焦的笔记
-        focusNote = notebookController.focusNote
-        // 获取当前笔记本id
-        notebookId = notebookController.notebookId
-        UIPasteboard.generalPasteboard().string = focusNote.noteTitle
-        removeTextAndHtmlComments(focusNote, notebookId)
+        removeTextAndHtmlComments()
         break;
       case 10:
         newBrotherNoteAndMerge()
@@ -494,6 +487,9 @@ var mnTextHandlerController = JSB.defineClass(
         break;
       case 12: // 批量删除“模板：”
         deleteSpecialCommentOfLastLightYellowNote("模版：")
+        break;
+      case 13: // 克隆卡片为自身的子卡片（只能复制标题）
+        cloneNoteSelf()
         break;
       default:
         self.textviewOutput.text = "no results"
@@ -1142,7 +1138,7 @@ function newBrotherNoteAndMerge() {
 function creatNote(title, content, color) {
   try {
     let notebook = currentNotebook()
-    let note = Note.createWithTitleNotebookDocument(title, notebook,currentDocController().document)
+    let note = Note.createWithTitleNotebookDocument(title, notebook, currentDocController().document)
     // if (content) {
       // try {
       //   note.appendMarkdownComment(content)
@@ -1201,6 +1197,34 @@ function deleteSpecialCommentOfLastLightYellowNote(comment = "模版：") {
         }
       }
     }
+  }
+  // 更新数据库后刷新界面
+  Application.sharedInstance().refreshAfterDBChanged(notebookId)
+}
+
+
+// 批量删除最后层级的黄色卡片中的“模版：”
+/**
+ * @param {Number} colorIndex
+ */
+function cloneNoteSelf() {
+  // 获取当前激活的窗口
+  let focusWindow = Application.sharedInstance().focusWindow
+  // 获取笔记本控制器
+  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+  // 获取当前聚焦的笔记
+  let focusNotes = getFocusNotes()
+  // 获取当前笔记本id
+  let notebookId = notebookController.notebookId
+
+  for (note of focusNotes) {
+    // 获取旧卡片的标题
+    let oldtitle = note.noteTitle
+    // 获取旧卡片的颜色
+    let oldNoteColorIndex = note.colorIndex
+    // 创建新卡片，标题为旧卡片的标题
+    newNote = creatNote(oldtitle, "", oldNoteColorIndex)
+    note.addChild(newNote)
   }
   // 更新数据库后刷新界面
   Application.sharedInstance().refreshAfterDBChanged(notebookId)
