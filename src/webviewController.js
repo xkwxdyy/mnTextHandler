@@ -992,17 +992,25 @@ function getAllDescendants(note) {
 //   })
 //   Application.sharedInstance().refreshAfterDBChanged(notebookId)
 // }
-function removeTextAndHtmlComments(note, notebookId) {
-  let textNoteIndex = []
-  note.comments.map((comment,index)=>{
-    if(comment.type === "TextNote" || comment.type === "HtmlNote"){
-      textNoteIndex.unshift(index)
-    }
-  })
+function removeTextAndHtmlComments() {
+  // 获取当前激活的窗口
+  let focusWindow = Application.sharedInstance().focusWindow
+  // 获取笔记本控制器
+  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+  // 获取当前聚焦的笔记
+  let note = notebookController.focusNote
+  // 获取当前笔记本id
+  let notebookId = notebookController.notebookId
   UndoManager.sharedInstance().undoGrouping(
     String(Date.now()),
     notebookId,
     ()=>{
+      let textNoteIndex = []
+      note.comments.map((comment,index)=>{
+        if(comment.type === "TextNote" || comment.type === "HtmlNote"){
+          textNoteIndex.unshift(index)
+        }
+      })
       note.noteTitle = ""
       textNoteIndex.forEach(index=>{
         note.removeCommentByIndex(index)
