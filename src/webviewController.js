@@ -487,6 +487,7 @@ var mnTextHandlerController = JSB.defineClass(
         break;
       case 12: // 批量删除“模板：”
         deleteSpecialCommentOfLastLightYellowNote("模版：")
+        deleteSpecialCommentOfLastLightYellowNote("模板：")
         break;
       case 13: // 克隆卡片为自身的子卡片（只能复制标题）
         cloneNoteSelf()
@@ -817,7 +818,8 @@ String.prototype.regularExpression = function (search, replacement) {
 };
 
 
-
+// TODO:如果从父父节点使用，会使用父父节点的内容，而不是父节点
+// TODO:不能多选处理
 /**
  * @param {Number} colorIndex
  */
