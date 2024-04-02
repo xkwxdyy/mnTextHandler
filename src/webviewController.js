@@ -412,6 +412,7 @@ var mnTextHandlerController = JSB.defineClass(
         self.textviewOutput.text = input.toTitleCase()
         // 将 textviewOutput.text 的内容复制到剪切板
         UIPasteboard.generalPasteboard().string = self.textviewOutput.text
+        noteTitleToTitleCase()
         break;
       case 2:  // 分割
         self.delimiter = self.textviewDelimeter.text
@@ -726,6 +727,23 @@ String.prototype.toTitleCase = function () {
     })
     .join('') // convert the list into a string
 }
+function noteTitleToTitleCase() {
+  // 获取当前激活的窗口
+  let focusWindow = Application.sharedInstance().focusWindow
+  // 获取笔记本控制器
+  let notebookController = Application.sharedInstance().studyController(focusWindow).notebookController
+  // 获取当前聚焦的笔记
+  let focusNotes = getFocusNotes()
+  // 获取当前笔记本id
+  let notebookId = notebookController.notebookId
+
+  for (note of focusNotes) {
+    note.noteTitle = note.noteTitle.toTitleCase()
+  }
+  // 更新数据库后刷新界面
+  Application.sharedInstance().refreshAfterDBChanged(notebookId)
+}
+
 
 // 需求：关键词分割，并转换为无序列表
 // 参数说明：
@@ -1205,7 +1223,7 @@ function deleteSpecialCommentOfLastLightYellowNote(comment = "模版：") {
 }
 
 
-// 批量删除最后层级的黄色卡片中的“模版：”
+// 克隆卡片为自身的子卡片（只能复制标题）
 /**
  * @param {Number} colorIndex
  */
