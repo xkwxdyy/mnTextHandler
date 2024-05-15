@@ -886,13 +886,12 @@ function setTitleAux(note, text, textMatchResult) {
   let oldTitle = note.noteTitle;
   let newTitle;
 
-  if (textMatchResult) {
+  // if (textMatchResult) {
     // 检查【xxx】格式，并捕获xxx内容
     let matchResult = oldTitle.match(/^【([^】]*)/);
 
     if (matchResult) { // 如果有匹配结果
       let capturedText = matchResult[1];
-      
       // 检查是否包含text并且是否需要补上】
       if (capturedText.includes(text) && !oldTitle.includes("】")) {
         note.noteTitle = oldTitle + "】";
@@ -913,7 +912,15 @@ function setTitleAux(note, text, textMatchResult) {
       }
       note.noteTitle = newTitle;
     }
-  }
+  // } else {
+  //   // 如果没有匹配结果，直接添加【xxx】
+  //   if (note.colorIndex == 2) {
+  //     newTitle = "【" + text + "】; " + oldTitle;
+  //   } else {
+  //     newTitle = "【" + text + "】" + oldTitle;
+  //   }
+  //   note.noteTitle = newTitle;
+  // }
 }
 
 
